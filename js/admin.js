@@ -139,7 +139,7 @@
     var configured = global.IgudCloud && global.IgudCloud.isConfigured();
     box.appendChild(U.el('div', {
       class: 'badge ' + (configured ? 'badge-green' : 'badge-yellow')
-    }, [configured ? 'מחובר ל-Firebase' : 'טרם חובר — ערכו את js/firebase-config.js']));
+    }, [configured ? 'מחובר ל-Firebase (Firestore בלבד — ללא עלות ובלי צורך בכרטיס אשראי)' : 'טרם חובר — ערכו את js/firebase-config.js']));
 
     var syncBtn = U.el('button', { class: 'btn btn-gold btn-sm', style: 'margin-top:12px;' }, ['סנכרן נתונים מקומיים לענן (Firebase)']);
     var statusLine = U.el('div', { class: 'field-label', style: 'margin-top:10px;' }, ['']);
@@ -150,32 +150,16 @@
         return;
       }
       syncBtn.disabled = true;
-      statusLine.textContent = 'מעלה קבצי חוברות מצורפים לאחסון הענן...';
+      statusLine.textContent = 'מסנכרן נתונים ל-Firestore...';
 
-      (async function () {
-        var current = global.IgudStore.getState();
-        for (var i = 0; i < current.booklets.length; i++) {
-          var booklet = current.booklets[i];
-          if (booklet.fileDataUrl && booklet.fileDataUrl.indexOf('data:') === 0) {
-            try {
-              var blob = U.dataUrlToBlob(booklet.fileDataUrl);
-              var path = 'booklets/' + booklet.id + '-' + (booklet.fileName || 'file.pdf');
-              booklet.fileDataUrl = await global.IgudCloud.uploadFile(path, blob);
-            } catch (e) {
-              console.warn('sync upload failed', e);
-            }
-          }
-        }
-        statusLine.textContent = 'מסנכרן נתונים ל-Firestore...';
-        try {
-          await global.IgudCloud.pushState(current);
-          global.IgudStore.persist({ skipCloudPush: true });
-          statusLine.textContent = 'הסנכרון הושלם בהצלחה! הנתונים זמינים כעת מכל מכשיר מחובר.';
-        } catch (e) {
-          statusLine.textContent = 'שגיאה בסנכרון: ' + e.message;
-        }
+      global.IgudCloud.pushState(global.IgudStore.getState()).then(function () {
+        global.IgudStore.persist({ skipCloudPush: true });
+        statusLine.textContent = 'הסנכרון הושלם בהצלחה! הנתונים זמינים כעת מכל מכשיר מחובר.';
+      }).catch(function (e) {
+        statusLine.textContent = 'שגיאה בסנכרון: ' + e.message;
+      }).finally(function () {
         syncBtn.disabled = false;
-      })();
+      });
     });
 
     box.appendChild(syncBtn);

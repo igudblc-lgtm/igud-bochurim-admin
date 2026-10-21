@@ -38,7 +38,7 @@
         if (diff <= 1) {
           var monthIndex = state.weeks[i].monthIndex;
           var booklet = state.booklets[monthIndex];
-          if (booklet && booklet.corePdfDataUrl) {
+          if (booklet && booklet.driveFileId) {
             return { monthIndex: monthIndex, booklet: booklet };
           }
         }
@@ -59,7 +59,14 @@
         '</div>';
 
       global.Igud.buildMergedBookletPdf(monthIndex).then(function (result) {
-        body.querySelector('#preview-status').textContent = '';
+        if (result.merged) {
+          body.querySelector('#preview-status').textContent = '';
+        } else if (result.hasDriveFile) {
+          body.querySelector('#preview-status').innerHTML =
+            'לא ניתן היה למזג אוטומטית את הקובץ המקורי מ-Drive (לרוב בשל גודל הקובץ או הרשאות שיתוף). ' +
+            'להלן עמוד השער והשאלות בלבד — ' +
+            '<a href="' + result.driveOpenUrl + '" target="_blank" style="color:var(--navy-700);font-weight:700;">פתיחת הקובץ המקורי ב-Drive</a>.';
+        }
         var frame = document.createElement('iframe');
         frame.src = result.url;
         frame.style.cssText = 'width:100%;height:100%;border:none;';
@@ -206,24 +213,41 @@
         openPrintPreviewModal(readyToPrint.monthIndex, readyToPrint.booklet);
       });
       container.querySelector('#rp-approve').addEventListener('click', function () {
-        rpStatus.textContent = 'מכין קובץ מאוחד להדפסה...';
+        var fallbackTab = window.open('', '_blank');
+        rpStatus.textContent = 'מכין קובץ להדפסה...';
         global.Igud.buildMergedBookletPdf(readyToPrint.monthIndex).then(function (result) {
-          rpStatus.textContent = '';
           var link = document.createElement('a');
           link.href = result.url;
-          link.download = 'חוברת-' + readyToPrint.booklet.monthName + '-מוכן-לדפוס.pdf';
+          link.download = 'חוברת-' + readyToPrint.booklet.monthName + (result.merged ? '-מוכן-לדפוס.pdf' : '-עמוד-שער-ושאלות.pdf');
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
+
+          if (result.merged) {
+            rpStatus.textContent = 'הקובץ המאוחד הורד בהצלחה.';
+            if (fallbackTab) fallbackTab.close();
+          } else if (result.hasDriveFile) {
+            rpStatus.innerHTML =
+              'לא ניתן היה למזג אוטומטית — הורדנו רק את עמוד השער והשאלות. ' +
+              'החוברת המקורית נפתחת כעת מ-Drive בלשונית נפרדת; יש לשלוח את שני הקבצים לבית הדפוס.';
+            if (fallbackTab) fallbackTab.location.href = result.driveOpenUrl;
+          } else if (fallbackTab) {
+            fallbackTab.close();
+          }
         }).catch(function (e) {
           rpStatus.textContent = 'שגיאה: ' + e.message;
+          if (fallbackTab) fallbackTab.close();
         });
       });
       container.querySelector('#rp-email').addEventListener('click', function () {
         var specs = state.printSpecs;
         var subject = 'הזמנת הדפסה — חוברת ' + readyToPrint.booklet.monthName + ' · א חסידישע ליל שישי';
+        var driveNote = readyToPrint.booklet.driveFileId
+          ? ('\nקובץ המאמר המקורי: ' + U.driveOpenUrl(readyToPrint.booklet.driveFileId) + '\n')
+          : '';
         var body =
-          'שלום,\n\nמבקשים להדפיס את חוברת הלימוד לחודש ' + readyToPrint.booklet.monthName + '.\n\n' +
+          'שלום,\n\nמבקשים להדפיס את חוברת הלימוד לחודש ' + readyToPrint.booklet.monthName + '.\n' +
+          driveNote + '\n' +
           'כמות עותקים: ' + specs.quantity + '\n' +
           'גודל נייר: ' + specs.paperSize + '\n' +
           'הנחיות: ' + specs.instructions + '\n\n' +

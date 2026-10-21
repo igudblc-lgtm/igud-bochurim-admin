@@ -139,7 +139,9 @@
         fileName: null,
         fileDataUrl: null,
         corePdfName: null,
-        corePdfDataUrl: null
+        corePdfDataUrl: null,
+        driveLink: null,
+        driveFileId: null
       };
     });
   }

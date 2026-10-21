@@ -79,6 +79,12 @@
     });
   }
 
+  function looksLikePdf(bytes) {
+    if (!bytes || bytes.length < 5) return false;
+    var header = String.fromCharCode(bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]);
+    return header === '%PDF-';
+  }
+
   async function buildMergedBookletPdf(monthIndex) {
     var state = global.IgudStore.getState();
     var booklet = state.booklets[monthIndex];
@@ -91,20 +97,31 @@
     var outDoc = await PDFDocument.create();
     await addCanvasPage(outDoc, canvas);
 
-    if (booklet.corePdfDataUrl) {
+    var merged = false;
+    if (booklet.driveFileId) {
       try {
-        var coreBytes = await fetchAsUint8Array(booklet.corePdfDataUrl);
+        var coreBytes = await fetchAsUint8Array(U.driveDownloadUrl(booklet.driveFileId));
+        if (!looksLikePdf(coreBytes)) {
+          throw new Error('הקובץ שהתקבל מ-Drive אינו PDF תקין (כנראה דף אישור גדול/הרשאות של Drive)');
+        }
         var coreDoc = await PDFDocument.load(coreBytes);
         var copiedPages = await outDoc.copyPages(coreDoc, coreDoc.getPageIndices());
         copiedPages.forEach(function (p) { outDoc.addPage(p); });
+        merged = true;
       } catch (e) {
-        console.warn('pdfmerge: failed to merge core PDF', e);
+        console.warn('pdfmerge: failed to merge core PDF from Drive, falling back', e);
       }
     }
 
     var mergedBytes = await outDoc.save();
     var blob = new Blob([mergedBytes], { type: 'application/pdf' });
-    return { blob: blob, url: URL.createObjectURL(blob) };
+    return {
+      blob: blob,
+      url: URL.createObjectURL(blob),
+      merged: merged,
+      hasDriveFile: !!booklet.driveFileId,
+      driveOpenUrl: booklet.driveFileId ? U.driveOpenUrl(booklet.driveFileId) : null
+    };
   }
 
   global.Igud.buildMergedBookletPdf = buildMergedBookletPdf;

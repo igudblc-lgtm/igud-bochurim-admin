@@ -107,6 +107,8 @@
     (parsed.booklets || []).forEach(function (b) {
       if (b.corePdfName === undefined) b.corePdfName = null;
       if (b.corePdfDataUrl === undefined) b.corePdfDataUrl = null;
+      if (b.driveLink === undefined) b.driveLink = null;
+      if (b.driveFileId === undefined) b.driveFileId = null;
     });
     (parsed.students || []).forEach(function (s) {
       if (!s.branchId) s.branchId = D.MAIN_BRANCH_ID;

@@ -161,6 +161,71 @@
     return new Blob([array], { type: mime });
   }
 
+  function parseDriveFileId(url) {
+    if (!url) return null;
+    var patterns = [
+      /\/file\/d\/([a-zA-Z0-9_-]{10,})/,
+      /[?&]id=([a-zA-Z0-9_-]{10,})/,
+      /\/d\/([a-zA-Z0-9_-]{10,})/
+    ];
+    for (var i = 0; i < patterns.length; i++) {
+      var m = url.match(patterns[i]);
+      if (m) return m[1];
+    }
+    return null;
+  }
+
+  function driveOpenUrl(fileId) {
+    return 'https://drive.google.com/file/d/' + fileId + '/view';
+  }
+
+  function drivePreviewUrl(fileId) {
+    return 'https://drive.google.com/file/d/' + fileId + '/preview';
+  }
+
+  function driveDownloadUrl(fileId) {
+    return 'https://drive.google.com/uc?export=download&id=' + fileId;
+  }
+
+  function compressImageFile(file, opts) {
+    opts = opts || {};
+    var maxDim = opts.maxDim || 1000;
+    var targetBytes = opts.targetBytes || 150 * 1024;
+
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onerror = reject;
+      reader.onload = function () {
+        var img = new Image();
+        img.onerror = reject;
+        img.onload = function () {
+          var ratio = Math.min(1, maxDim / Math.max(img.width, img.height));
+          var w = Math.round(img.width * ratio);
+          var h = Math.round(img.height * ratio);
+          var canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+
+          var mime = 'image/webp';
+          var testUrl = canvas.toDataURL(mime, 0.8);
+          if (testUrl.indexOf('data:image/webp') !== 0) mime = 'image/jpeg';
+
+          var qualities = [0.8, 0.6, 0.45, 0.3];
+          var best = canvas.toDataURL(mime, qualities[0]);
+          for (var i = 0; i < qualities.length; i++) {
+            var candidate = canvas.toDataURL(mime, qualities[i]);
+            best = candidate;
+            if (candidate.length * 0.75 <= targetBytes) break;
+          }
+          resolve(best);
+        };
+        img.src = reader.result;
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
   function escapeHtml(str) {
     return String(str == null ? '' : str)
       .replace(/&/g, '&amp;')
@@ -184,6 +249,11 @@
     randomCode4: randomCode4,
     downloadJson: downloadJson,
     readFileAsText: readFileAsText,
-    dataUrlToBlob: dataUrlToBlob
+    dataUrlToBlob: dataUrlToBlob,
+    parseDriveFileId: parseDriveFileId,
+    driveOpenUrl: driveOpenUrl,
+    drivePreviewUrl: drivePreviewUrl,
+    driveDownloadUrl: driveDownloadUrl,
+    compressImageFile: compressImageFile
   };
 })(window);

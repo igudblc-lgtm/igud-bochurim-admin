@@ -34,15 +34,8 @@
   function openOrDownloadBooklet(idx) {
     var state = global.IgudStore.getState();
     var booklet = state.booklets[idx];
-    if (booklet.fileDataUrl && booklet.fileDataUrl.indexOf('data:') === 0) {
-      var link = document.createElement('a');
-      link.href = booklet.fileDataUrl;
-      link.download = booklet.fileName || (booklet.monthName + '.pdf');
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-    } else if (booklet.fileDataUrl) {
-      window.open(booklet.fileDataUrl, '_blank');
+    if (booklet.driveFileId) {
+      window.open(U.driveOpenUrl(booklet.driveFileId), '_blank');
     } else {
       printBooklet(idx);
     }
@@ -86,100 +79,55 @@
     });
   }
 
-  function coreContentModal(booklet, monthIndex) {
-    global.Igud.openModal('תוכן קבוע — ' + booklet.monthName, function (body, close) {
+  function driveLinkModal(booklet, monthIndex) {
+    global.Igud.openModal('קישור ל-Google Drive — ' + booklet.monthName, function (body, close) {
       body.innerHTML =
         '<div class="form-group">' +
           '<div class="field-label">' +
-            'העמודים הקבועים של המאמר עצמו (PDF) — תוכן זה "יזכר" ויחובר אוטומטית בכל שנה לעמוד השער והשאלות המעודכנים.' +
+            'הדביקו כאן קישור שיתוף רגיל מ-Google Drive לחוברת המקורית (PDF). המערכת תזהה את הקובץ אוטומטית ותשתמש בו לפתיחה/הורדה, ותנסה למזג אותו עם עמוד השער והשאלות המעודכנים.' +
           '</div>' +
-          '<div id="core-status" style="margin:8px 0 14px;"></div>' +
-          '<input id="core-file" type="file" accept=".pdf" style="display:none;">' +
-          '<div class="admin-btn-row">' +
-            '<button class="btn btn-outline btn-sm" id="core-attach">' + (booklet.corePdfName ? 'החלפת קובץ' : 'צירוף קובץ PDF') + '</button>' +
-            (booklet.corePdfName ? '<button class="btn btn-danger-outline btn-sm" id="core-remove">הסרה</button>' : '') +
-            '<button class="btn btn-gold btn-sm" id="core-preview">תצוגה מקדימה של הקובץ המאוחד</button>' +
-          '</div>' +
-          '<div id="core-preview-status" class="field-label" style="margin-top:10px;"></div>' +
+          '<input id="drive-link-input" type="text" class="form-control" placeholder="https://drive.google.com/file/d/..." value="' + U.escapeHtml(booklet.driveLink || '') + '">' +
+          '<div id="drive-status" style="margin-top:10px;"></div>' +
         '</div>' +
         '<div class="modal-footer">' +
-          '<button class="btn btn-outline" id="core-close">סגירה</button>' +
+          '<button class="btn btn-outline" id="drive-cancel">ביטול</button>' +
+          '<button class="btn btn-primary" id="drive-save">שמירה</button>' +
         '</div>';
 
-      var statusBox = body.querySelector('#core-status');
+      var input = body.querySelector('#drive-link-input');
+      var statusBox = body.querySelector('#drive-status');
+
       function refreshStatus() {
         statusBox.innerHTML = '';
-        statusBox.appendChild(U.el('span', { class: 'badge ' + (booklet.corePdfName ? 'badge-green' : 'badge-yellow') }, [
-          booklet.corePdfName ? ('📄 ' + booklet.corePdfName) : 'עדיין לא צורף תוכן קבוע'
-        ]));
+        if (booklet.driveFileId) {
+          statusBox.appendChild(U.el('span', { class: 'badge badge-green' }, ['🔗 מקושר ל-Drive']));
+        } else {
+          statusBox.appendChild(U.el('span', { class: 'badge badge-yellow' }, ['טרם קושר קובץ']));
+        }
       }
       refreshStatus();
 
-      var fileInput = body.querySelector('#core-file');
-      body.querySelector('#core-attach').addEventListener('click', function () { fileInput.click(); });
-      fileInput.addEventListener('change', function () {
-        var file = fileInput.files[0];
-        if (!file) return;
-
-        function finish(url) {
-          booklet.corePdfName = file.name;
-          booklet.corePdfDataUrl = url;
-          global.IgudStore.persist();
-          refreshStatus();
-          fileInput.value = '';
-          close();
-          global.Igud.rerender();
+      body.querySelector('#drive-cancel').addEventListener('click', close);
+      body.querySelector('#drive-save').addEventListener('click', function () {
+        var raw = input.value.trim();
+        if (!raw) {
+          booklet.driveLink = null;
+          booklet.driveFileId = null;
+        } else {
+          var fileId = U.parseDriveFileId(raw);
+          if (!fileId) {
+            window.alert('לא זוהה קישור Drive תקין. ודאו שהעתקתם קישור שיתוף מלא (לדוגמה: https://drive.google.com/file/d/XXXX/view).');
+            return;
+          }
+          booklet.driveLink = raw;
+          booklet.driveFileId = fileId;
         }
-
-        if (global.IgudCloud && global.IgudCloud.isConfigured()) {
-          global.IgudCloud.init();
-          global.IgudCloud.uploadFile('booklets-core/' + booklet.id + '-' + file.name, file).then(finish).catch(function (e) {
-            window.alert('העלאה לענן נכשלה: ' + e.message);
-          });
-          return;
-        }
-
-        if (file.size > 8 * 1024 * 1024) {
-          window.alert('הקובץ גדול מדי לאחסון מקומי (מקסימום 8MB). חברו קודם את Firebase לקבצים גדולים יותר.');
-          fileInput.value = '';
-          return;
-        }
-        var reader = new FileReader();
-        reader.onload = function () { finish(reader.result); };
-        reader.readAsDataURL(file);
+        global.IgudStore.persist();
+        close();
+        global.Igud.rerender();
       });
-
-      var removeBtn = body.querySelector('#core-remove');
-      if (removeBtn) {
-        removeBtn.addEventListener('click', function () {
-          booklet.corePdfName = null;
-          booklet.corePdfDataUrl = null;
-          global.IgudStore.persist();
-          close();
-          global.Igud.rerender();
-        });
-      }
-
-      var previewStatus = body.querySelector('#core-preview-status');
-      body.querySelector('#core-preview').addEventListener('click', function () {
-        var previewTab = window.open('', '_blank');
-        if (previewTab) previewTab.document.write('<p style="font-family:sans-serif;padding:20px;">מכין תצוגה מקדימה...</p>');
-        previewStatus.textContent = 'מכין תצוגה מקדימה...';
-        global.Igud.buildMergedBookletPdf(monthIndex).then(function (result) {
-          previewStatus.textContent = '';
-          if (previewTab) previewTab.location.href = result.url;
-          else window.alert('הדפדפן חסם את פתיחת החלון. אפשרו חלונות קופצים לאתר זה ונסו שוב.');
-        }).catch(function (e) {
-          previewStatus.textContent = 'שגיאה ביצירת הקובץ: ' + e.message;
-          if (previewTab) previewTab.close();
-        });
-      });
-
-      body.querySelector('#core-close').addEventListener('click', close);
     });
   }
-
-  var MAX_FILE_BYTES = 3 * 1024 * 1024;
 
   function renderBooklets(container, state) {
     var isAdmin = global.IgudAuth.isAdmin();
@@ -226,82 +174,12 @@
         editBtn.addEventListener('click', function () { editQuestionsModal(booklet); });
         row.appendChild(editBtn);
 
-        var coreBtn = U.el('button', { class: 'btn btn-outline btn-sm' + (booklet.corePdfDataUrl ? ' has-core' : '') }, [booklet.corePdfDataUrl ? '📄 תוכן קבוע ✓' : '📄 תוכן קבוע']);
-        coreBtn.addEventListener('click', function () { coreContentModal(booklet, idx); });
-        row.appendChild(coreBtn);
+        var driveBtn = U.el('button', { class: 'btn btn-outline btn-sm' + (booklet.driveFileId ? ' has-core' : '') }, [booklet.driveFileId ? '🔗 Drive ✓' : '🔗 קישור ל-Drive']);
+        driveBtn.addEventListener('click', function () { driveLinkModal(booklet, idx); });
+        row.appendChild(driveBtn);
+      } else if (booklet.driveFileId) {
+        row.appendChild(U.el('span', { class: 'badge badge-green' }, ['🔗 מקושר ל-Drive']));
       }
-
-      var actionsCell = U.el('div', { class: 'booklet-file-cell' });
-
-      var fileChip = U.el('span', { class: 'file-chip' });
-      var fileInput = U.el('input', { type: 'file', accept: '.pdf,.doc,.docx', style: 'display:none;' });
-
-      function refreshFileChip() {
-        fileChip.innerHTML = '';
-        if (booklet.fileName) {
-          fileChip.appendChild(U.el('span', { class: 'file-chip-name' }, ['📎 ' + booklet.fileName]));
-          if (isAdmin) {
-            var removeBtn = U.el('button', { class: 'file-chip-remove', title: 'הסרת הקובץ המצורף' }, ['×']);
-            removeBtn.addEventListener('click', function () {
-              booklet.fileName = null;
-              booklet.fileDataUrl = null;
-              global.IgudStore.persist();
-              refreshFileChip();
-            });
-            fileChip.appendChild(removeBtn);
-          }
-        }
-      }
-      refreshFileChip();
-
-      var attachBtn = U.el('button', { class: 'btn btn-outline btn-sm' }, ['צירוף קובץ']);
-      attachBtn.addEventListener('click', function () { fileInput.click(); });
-      fileInput.addEventListener('change', function () {
-        var file = fileInput.files[0];
-        if (!file) return;
-
-        if (global.IgudCloud && global.IgudCloud.isConfigured()) {
-          if (file.size > 20 * 1024 * 1024) {
-            window.alert('הקובץ גדול מדי (מקסימום 20MB).');
-            fileInput.value = '';
-            return;
-          }
-          booklet.fileName = file.name;
-          global.IgudCloud.init();
-          global.IgudCloud.uploadFile('booklets/' + booklet.id + '-' + file.name, file).then(function (url) {
-            booklet.fileDataUrl = url;
-            global.IgudStore.persist();
-            refreshFileChip();
-            fileInput.value = '';
-          }).catch(function (e) {
-            window.alert('העלאה לענן נכשלה: ' + e.message);
-            fileInput.value = '';
-          });
-          return;
-        }
-
-        if (file.size > MAX_FILE_BYTES) {
-          window.alert('הקובץ גדול מדי לאחסון מקומי (מקסימום 3MB). לחוברות גדולות יותר יש צורך בשרת/אחסון ענן — ניתן בינתיים להמשיך עם ההדפסה האוטומטית.');
-          fileInput.value = '';
-          return;
-        }
-        var reader = new FileReader();
-        reader.onload = function () {
-          booklet.fileName = file.name;
-          booklet.fileDataUrl = reader.result;
-          global.IgudStore.persist();
-          refreshFileChip();
-          fileInput.value = '';
-        };
-        reader.readAsDataURL(file);
-      });
-
-      if (isAdmin) {
-        actionsCell.appendChild(attachBtn);
-        actionsCell.appendChild(fileInput);
-      }
-      actionsCell.appendChild(fileChip);
-      row.appendChild(actionsCell);
 
       var dlBtn = U.el('button', { class: 'btn btn-primary btn-sm' }, ['הדפסה / הורדה']);
       dlBtn.addEventListener('click', function () { openOrDownloadBooklet(idx); });
@@ -310,11 +188,8 @@
       box.appendChild(row);
     });
 
-    var cloudOn = global.IgudCloud && global.IgudCloud.isConfigured();
     var storageNote = U.el('div', { class: 'storage-note' }, [
-      cloudOn
-        ? 'קבצים מצורפים נשמרים באחסון הענן (Firebase Storage) וזמינים מכל מכשיר מחובר.'
-        : 'קבצים מצורפים נשמרים מקומית בדפדפן (localStorage) ומוגבלים ל-3MB לקובץ. לאחסון קבוע וגדול יותר יש לחבר את Firebase (ראו מסך "ניהול מערכת").'
+      'קבצי החוברות המקוריים (PDF גדולים) מקושרים ישירות מ-Google Drive שלכם — ללא העלאה או אחסון כפול. רק נתוני המערכת (לוח שנה, נוכחות, שאלות) נשמרים/מסונכרנים בענן.'
     ]);
     box.appendChild(storageNote);
 
@@ -371,17 +246,17 @@
       photoInput.addEventListener('change', function () {
         var file = photoInput.files[0];
         if (!file) return;
-        if (file.size > 3 * 1024 * 1024) {
-          window.alert('התמונה גדולה מדי (מקסימום 3MB). נא לבחור תמונה קטנה יותר.');
+        if (file.size > 15 * 1024 * 1024) {
+          window.alert('התמונה גדולה מדי. נא לבחור תמונה קטנה יותר.');
           photoInput.value = '';
           return;
         }
-        var reader = new FileReader();
-        reader.onload = function () {
-          posterImageDataUrl = reader.result;
+        U.compressImageFile(file).then(function (compressedDataUrl) {
+          posterImageDataUrl = compressedDataUrl;
           refreshPhotoChip();
-        };
-        reader.readAsDataURL(file);
+        }).catch(function () {
+          window.alert('שגיאה בעיבוד התמונה. נסו קובץ אחר.');
+        });
       });
       photoRow.appendChild(photoAddBtn);
       photoRow.appendChild(photoChip);
