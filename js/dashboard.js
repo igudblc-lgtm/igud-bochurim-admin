@@ -13,15 +13,18 @@
       var w = weeks[i];
       var diff = i - idx;
       var when = diff === 1 ? 'בעוד שבוע' : 'בעוד ' + weekWords[diff];
+      var eventDate = new Date();
+      eventDate.setDate(eventDate.getDate() + diff * 7);
+
       if (w.type === 'special') {
-        notes.push({ when: when, color: 'purple', text: 'ליל שישי חוויתי בפרשת ' + w.parsha + ' — יש להתחיל הכנות מיוחדות ולתלות מודעות מראש.' });
+        notes.push({ when: when, color: 'purple', date: eventDate, title: 'ליל שישי חוויתי — פרשת ' + w.parsha, text: 'ליל שישי חוויתי בפרשת ' + w.parsha + ' — יש להתחיל הכנות מיוחדות ולתלות מודעות מראש.' });
       } else if (w.type === 'guest') {
-        notes.push({ when: when, color: 'gold', text: 'משפיע אורח: ' + w.mashpia + ' (פרשת ' + w.parsha + ') — יש לתלות מודעות ולתאם לוגיסטיקה.' });
+        notes.push({ when: when, color: 'gold', date: eventDate, title: 'משפיע אורח — ' + w.mashpia, text: 'משפיע אורח: ' + w.mashpia + ' (פרשת ' + w.parsha + ') — יש לתלות מודעות ולתאם לוגיסטיקה.' });
       } else if (w.type === 'unity') {
-        notes.push({ when: when, color: 'green', text: 'שבת התאחדות בפרשת ' + w.parsha + ' — יש לשריין קמפוס ולתאם מראש.' });
+        notes.push({ when: when, color: 'green', date: eventDate, title: 'שבת התאחדות — פרשת ' + w.parsha, text: 'שבת התאחדות בפרשת ' + w.parsha + ' — יש לשריין קמפוס ולתאם מראש.' });
       }
       if (i > idx && weeks[i].monthIndex !== weeks[i - 1].monthIndex) {
-        notes.push({ when: when, color: 'blue', text: 'ראש חודש ' + w.monthName + ' — יש לשלוח את חוברת הלימוד לדפוס.' });
+        notes.push({ when: when, color: 'blue', date: eventDate, title: 'ראש חודש ' + w.monthName, text: 'ראש חודש ' + w.monthName + ' — יש לשלוח את חוברת הלימוד לדפוס.' });
       }
     }
     return notes.slice(0, 5);
@@ -96,11 +99,21 @@
       timelineList.innerHTML = '<div class="timeline-item"><div class="timeline-text">אין התראות קרובות כרגע.</div></div>';
     } else {
       notifications.forEach(function (n) {
+        var mailBtn = U.el('button', { class: 'timeline-action-btn', title: 'שליחת תזכורת במייל' }, ['✉️']);
+        var icsBtn = U.el('button', { class: 'timeline-action-btn', title: 'הוספה ליומן/משימות' }, ['📅']);
+        mailBtn.addEventListener('click', function () {
+          window.location.href = U.buildMailtoUrl('תזכורת: ' + n.title, n.text + '\n\nנשלח ממערכת הניהול — איגוד בחורים.');
+        });
+        icsBtn.addEventListener('click', function () {
+          U.downloadIcsEvent(n.title, n.text, n.date);
+        });
+
         var row = U.el('div', { class: 'timeline-item' }, [
           U.el('div', { class: 'timeline-dot dot-' + n.color }),
-          U.el('div', {}, [
+          U.el('div', { class: 'timeline-body' }, [
             U.el('div', { class: 'timeline-text', html: '<strong>' + n.when + ':</strong> ' + U.escapeHtml(n.text) })
-          ])
+          ]),
+          U.el('div', { class: 'timeline-actions' }, [mailBtn, icsBtn])
         ]);
         timelineList.appendChild(row);
       });

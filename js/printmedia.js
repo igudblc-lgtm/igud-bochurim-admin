@@ -190,15 +190,65 @@
     global.IgudData.POSTER_TEMPLATES.forEach(function (tpl) {
       var card = U.el('div', { class: 'card poster-card' });
       var preview = U.el('div', { class: 'poster-preview accent-' + tpl.accent });
+      var photoBox = U.el('div', { class: 'poster-preview-photo', style: 'display:none;' });
       var titleLine = U.el('div', { class: 'poster-preview-title' }, ['איגוד בחורים · ליל שישי']);
       var mainLine = U.el('div', { class: 'poster-preview-main' }, [tpl.name]);
       var subLine = U.el('div', { class: 'poster-preview-sub' }, ['']);
       var dedicationLine = U.el('div', { class: 'poster-preview-dedication' }, ['']);
+      preview.appendChild(photoBox);
       preview.appendChild(titleLine);
       preview.appendChild(mainLine);
       preview.appendChild(subLine);
       preview.appendChild(dedicationLine);
       card.appendChild(preview);
+
+      var posterImageDataUrl = null;
+      var photoWrap = U.el('div', { class: 'poster-field' });
+      photoWrap.appendChild(U.el('label', {}, ['תמונה (רשות)']));
+      var photoRow = U.el('div', { class: 'photo-attach-row' });
+      var photoInput = U.el('input', { type: 'file', accept: 'image/*', style: 'display:none;' });
+      var photoAddBtn = U.el('button', { class: 'btn btn-outline btn-sm', type: 'button' }, ['הוספת תמונה']);
+      var photoChip = U.el('span', { class: 'file-chip' });
+
+      function refreshPhotoChip() {
+        photoChip.innerHTML = '';
+        photoBox.innerHTML = '';
+        if (posterImageDataUrl) {
+          photoBox.style.display = 'block';
+          photoBox.appendChild(U.el('img', { src: posterImageDataUrl, alt: '' }));
+          var removeBtn = U.el('button', { class: 'file-chip-remove', title: 'הסרת התמונה' }, ['×']);
+          removeBtn.addEventListener('click', function () {
+            posterImageDataUrl = null;
+            photoInput.value = '';
+            refreshPhotoChip();
+          });
+          photoChip.appendChild(U.el('span', { class: 'file-chip-name' }, ['🖼️ תמונה מצורפת']));
+          photoChip.appendChild(removeBtn);
+        } else {
+          photoBox.style.display = 'none';
+        }
+      }
+      photoAddBtn.addEventListener('click', function () { photoInput.click(); });
+      photoInput.addEventListener('change', function () {
+        var file = photoInput.files[0];
+        if (!file) return;
+        if (file.size > 3 * 1024 * 1024) {
+          window.alert('התמונה גדולה מדי (מקסימום 3MB). נא לבחור תמונה קטנה יותר.');
+          photoInput.value = '';
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function () {
+          posterImageDataUrl = reader.result;
+          refreshPhotoChip();
+        };
+        reader.readAsDataURL(file);
+      });
+      photoRow.appendChild(photoAddBtn);
+      photoRow.appendChild(photoChip);
+      photoRow.appendChild(photoInput);
+      photoWrap.appendChild(photoRow);
+      card.appendChild(photoWrap);
 
       var inputs = [];
       tpl.fields.forEach(function (fieldLabel) {
@@ -246,6 +296,7 @@
         var printRoot = document.getElementById('print-root');
         printRoot.innerHTML =
           '<div style="direction:rtl;font-family:Heebo,Arial,sans-serif;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:40px;">' +
+            (posterImageDataUrl ? '<img src="' + posterImageDataUrl + '" style="max-width:320px;max-height:320px;border-radius:14px;object-fit:cover;">' : '') +
             '<div style="font-size:20px;letter-spacing:2px;color:#555;">איגוד בחורים · ליל שישי</div>' +
             '<div style="font-size:40px;font-weight:800;">' + U.escapeHtml(tpl.name) + '</div>' +
             '<div style="font-size:26px;color:#333;">' + U.escapeHtml(subLine.textContent) + '</div>' +

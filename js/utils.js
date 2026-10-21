@@ -67,6 +67,50 @@
     return node;
   }
 
+  function icsEscape(str) {
+    return String(str == null ? '' : str)
+      .replace(/\\/g, '\\\\')
+      .replace(/;/g, '\\;')
+      .replace(/,/g, '\\,')
+      .replace(/\n/g, '\\n');
+  }
+
+  function pad2(n) { return (n < 10 ? '0' : '') + n; }
+
+  function downloadIcsEvent(summary, description, date) {
+    var dateStr = '' + date.getFullYear() + pad2(date.getMonth() + 1) + pad2(date.getDate());
+    var now = new Date();
+    var stamp = now.getUTCFullYear() + pad2(now.getUTCMonth() + 1) + pad2(now.getUTCDate()) +
+      'T' + pad2(now.getUTCHours()) + pad2(now.getUTCMinutes()) + pad2(now.getUTCSeconds()) + 'Z';
+    var uid = 'igud-' + Date.now() + '@igud-bochurim';
+    var lines = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Igud Bochurim//Leil Shishi//HE',
+      'BEGIN:VEVENT',
+      'UID:' + uid,
+      'DTSTAMP:' + stamp,
+      'DTSTART;VALUE=DATE:' + dateStr,
+      'SUMMARY:' + icsEscape(summary),
+      'DESCRIPTION:' + icsEscape(description),
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ];
+    var blob = new Blob([lines.join('\r\n')], { type: 'text/calendar;charset=utf-8' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = 'tazkir-igud-bochurim.ics';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+
+  function buildMailtoUrl(subject, body) {
+    return 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
+  }
+
   function escapeHtml(str) {
     return String(str == null ? '' : str)
       .replace(/&/g, '&amp;')
@@ -81,6 +125,8 @@
     weekHebrewDateLabel: weekHebrewDateLabel,
     byId: byId,
     el: el,
-    escapeHtml: escapeHtml
+    escapeHtml: escapeHtml,
+    downloadIcsEvent: downloadIcsEvent,
+    buildMailtoUrl: buildMailtoUrl
   };
 })(window);
