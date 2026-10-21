@@ -98,9 +98,11 @@
       var titleLine = U.el('div', { class: 'poster-preview-title' }, ['איגוד בחורים · ליל שישי']);
       var mainLine = U.el('div', { class: 'poster-preview-main' }, [tpl.name]);
       var subLine = U.el('div', { class: 'poster-preview-sub' }, ['']);
+      var dedicationLine = U.el('div', { class: 'poster-preview-dedication' }, ['']);
       preview.appendChild(titleLine);
       preview.appendChild(mainLine);
       preview.appendChild(subLine);
+      preview.appendChild(dedicationLine);
       card.appendChild(preview);
 
       var inputs = [];
@@ -116,6 +118,34 @@
         card.appendChild(wrap);
       });
 
+      var dedicationSelect = null;
+      var dedicationInput = null;
+      if (tpl.dedication) {
+        var dedWrap = U.el('div', { class: 'poster-field' });
+        dedWrap.appendChild(U.el('label', {}, ['הקדשה (רשות)']));
+        var dedRow = U.el('div', { class: 'dedication-row' });
+        dedicationSelect = U.el('select', { class: 'dedication-select' });
+        dedicationSelect.appendChild(U.el('option', { value: '' }, ['ללא הקדשה']));
+        global.IgudData.DEDICATION_OPTIONS.forEach(function (opt) {
+          dedicationSelect.appendChild(U.el('option', { value: opt }, [opt]));
+        });
+        dedicationInput = U.el('input', { type: 'text', placeholder: 'שם / פרטי ההקדשה' });
+
+        var updateDedication = function () {
+          var text = dedicationSelect.value && dedicationInput.value.trim()
+            ? dedicationSelect.value + ' ' + dedicationInput.value.trim()
+            : '';
+          dedicationLine.textContent = text;
+        };
+        dedicationSelect.addEventListener('change', updateDedication);
+        dedicationInput.addEventListener('input', updateDedication);
+
+        dedRow.appendChild(dedicationSelect);
+        dedRow.appendChild(dedicationInput);
+        dedWrap.appendChild(dedRow);
+        card.appendChild(dedWrap);
+      }
+
       var printPosterBtn = U.el('button', { class: 'btn btn-gold', style: 'width:100%;justify-content:center;' }, ['הדפסת מודעה']);
       printPosterBtn.addEventListener('click', function () {
         var printRoot = document.getElementById('print-root');
@@ -124,6 +154,7 @@
             '<div style="font-size:20px;letter-spacing:2px;color:#555;">איגוד בחורים · ליל שישי</div>' +
             '<div style="font-size:40px;font-weight:800;">' + U.escapeHtml(tpl.name) + '</div>' +
             '<div style="font-size:26px;color:#333;">' + U.escapeHtml(subLine.textContent) + '</div>' +
+            (dedicationLine.textContent ? '<div style="font-size:19px;color:#555;font-style:italic;border-top:1px dashed #bbb;padding-top:14px;">' + U.escapeHtml(dedicationLine.textContent) + '</div>' : '') +
           '</div>';
         window.print();
       });

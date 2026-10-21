@@ -128,10 +128,12 @@
     });
   }
 
+  var DEDICATION_OPTIONS = ['לזכות', 'לע"נ', 'לרגל'];
+
   var POSTER_TEMPLATES = [
-    { id: 'p-farnas', name: 'מודעת "פרנס ליל שישי"', fields: ['שם הפרנס', 'תאריך'], accent: 'gold' },
-    { id: 'p-mazal', name: 'מודעת "מזל טוב"', fields: ['שם הבחור/המשפחה', 'לרגל'], accent: 'navy' },
-    { id: 'p-special', name: 'מודעת "התוועדות מיוחדת"', fields: ['כותרת האירוע', 'תאריך ושעה'], accent: 'purple' }
+    { id: 'p-farnas', name: 'מודעת "פרנס ליל שישי"', fields: ['שם הפרנס', 'תאריך'], accent: 'gold', dedication: true },
+    { id: 'p-mazal', name: 'מודעת "מזל טוב"', fields: ['שם הבחור/המשפחה', 'לרגל'], accent: 'navy', dedication: false },
+    { id: 'p-special', name: 'מודעת "התוועדות מיוחדת"', fields: ['כותרת האירוע', 'תאריך ושעה'], accent: 'purple', dedication: true }
   ];
 
   var CURRENT_WEEK_INDEX = 9; // first week of חשון, ~ reference "today"
@@ -142,6 +144,7 @@
     SHIURIM: SHIURIM,
     POSTER_TEMPLATES: POSTER_TEMPLATES,
     CURRENT_WEEK_INDEX: CURRENT_WEEK_INDEX,
+    DEDICATION_OPTIONS: DEDICATION_OPTIONS,
     buildWeeks: buildWeeks,
     buildBooklets: buildBooklets,
     seedRandom: seedRandom,
