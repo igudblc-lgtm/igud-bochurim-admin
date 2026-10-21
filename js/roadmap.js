@@ -76,8 +76,13 @@
 
     container.innerHTML =
       '<div class="page-head">' +
-        '<h1 class="page-title">מפת דרכים שנתית</h1>' +
-        '<p class="page-sub">ציר הזמן השנתי של "א חסידישע ליל שישי" — מאלול ועד אב</p>' +
+        '<div class="page-head-row">' +
+          '<div>' +
+            '<h1 class="page-title">מפת דרכים שנתית</h1>' +
+            '<p class="page-sub">ציר הזמן השנתי של "א חסידישע ליל שישי" — מאלול ועד אב</p>' +
+          '</div>' +
+          '<button class="btn btn-outline btn-sm" id="syllabus-btn">הפקת סילבוס לתלמידים</button>' +
+        '</div>' +
       '</div>' +
       '<div class="roadmap-banner">' +
         '<div><div class="roadmap-banner-label">מטרת המסגרת</div><div class="roadmap-banner-text">' + U.escapeHtml(state.goals.purpose) + '</div></div>' +
@@ -89,8 +94,14 @@
           return '<div class="legend-item"><span class="legend-dot dot-' + meta.color + '"></span>' + meta.label + '</div>';
         }).join('') +
       '</div>' +
+      '<div class="month-jump-row" id="month-jump-row"></div>' +
       '<div id="months-container"></div>';
 
+    container.querySelector('#syllabus-btn').addEventListener('click', function () {
+      global.Igud.printSyllabus();
+    });
+
+    var jumpRow = container.querySelector('#month-jump-row');
     var monthsContainer = container.querySelector('#months-container');
     var currentMonthIndex = state.weeks[state.currentWeekIndex].monthIndex;
 
@@ -98,7 +109,13 @@
       var monthWeeks = state.weeks.filter(function (w) { return w.monthIndex === monthIndex; });
       if (!monthWeeks.length) return;
 
-      var section = U.el('div', { class: 'month-section' });
+      var jumpBtn = U.el('button', { class: 'month-jump-chip' + (monthIndex === currentMonthIndex ? ' active' : '') }, [monthName]);
+      jumpBtn.addEventListener('click', function () {
+        document.getElementById('month-' + monthIndex).scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+      jumpRow.appendChild(jumpBtn);
+
+      var section = U.el('div', { class: 'month-section', id: 'month-' + monthIndex });
       var heading = U.el('div', { class: 'month-heading' }, [monthName + (monthIndex === currentMonthIndex ? ' · החודש הנוכחי' : '')]);
       section.appendChild(heading);
 

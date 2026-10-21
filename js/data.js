@@ -123,12 +123,32 @@
         id: 'b-' + idx,
         monthName: monthName,
         status: idx < 2 ? 'מוכן לחלוקה' : (idx === 2 ? 'נשלח לדפוס' : (idx === 3 ? 'בעריכה' : 'טרם הוחל')),
-        reviewQuestions: 'מהו היסוד המרכזי שלמדנו החודש במאמר? כיצד ניתן ליישם זאת הלכה למעשה בסדר היום?'
+        reviewQuestions: 'מהו היסוד המרכזי שלמדנו החודש במאמר? כיצד ניתן ליישם זאת הלכה למעשה בסדר היום?',
+        fileName: null,
+        fileDataUrl: null
       };
     });
   }
 
   var DEDICATION_OPTIONS = ['לזכות', 'לע"נ', 'לרגל'];
+
+  var QUESTION_TEMPLATES = [
+    {
+      id: 'general',
+      label: 'שאלון כללי לעיון וחזרה',
+      text: 'מהו היסוד המרכזי שלמדנו החודש במאמר?\nכיצד ניתן ליישם זאת הלכה למעשה בעבודת השבוע?\nאיזו נקודה במאמר הייתה הכי מחדשת עבורך?'
+    },
+    {
+      id: 'rosh-chodesh',
+      label: 'שאלון לקראת ראש חודש',
+      text: 'מהי הנקודה המרכזית העולה מהמאמר ביחס לחודש הקרוב?\nכיצד ניתן לקשר בין המאמר לעבודת התפילה של החודש?\nמהי נקודה אחת מהמאמר שהכי נגעה בליבך החודש?'
+    },
+    {
+      id: 'unity-shabbos',
+      label: 'שאלון לקראת שבת התאחדות',
+      text: 'מהי המסקנה המעשית העולה מהמאמר עבור התאחדות והתחברות הבחורים?\nכיצד ניתן להמשיך את ההתעוררות מההתוועדות לאורך השבוע?\nמה אתה לוקח אישית מהמאמר השבוע?'
+    }
+  ];
 
   var POSTER_TEMPLATES = [
     { id: 'p-farnas', name: 'מודעת "פרנס ליל שישי"', fields: ['שם הפרנס', 'תאריך'], accent: 'gold', dedication: true },
@@ -145,6 +165,7 @@
     POSTER_TEMPLATES: POSTER_TEMPLATES,
     CURRENT_WEEK_INDEX: CURRENT_WEEK_INDEX,
     DEDICATION_OPTIONS: DEDICATION_OPTIONS,
+    QUESTION_TEMPLATES: QUESTION_TEMPLATES,
     buildWeeks: buildWeeks,
     buildBooklets: buildBooklets,
     seedRandom: seedRandom,

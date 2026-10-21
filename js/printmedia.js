@@ -25,7 +25,7 @@
         '<h3>מאמרים ומפגשים</h3>' +
         weeksHtml +
         '<h3>שאלות לעיון וחזרה</h3>' +
-        '<p>' + U.escapeHtml(booklet.reviewQuestions) + '</p>' +
+        '<p style="white-space:pre-line;line-height:1.8;">' + U.escapeHtml(booklet.reviewQuestions) + '</p>' +
       '</div>';
 
     window.print();
@@ -33,7 +33,16 @@
 
   function editQuestionsModal(booklet) {
     global.Igud.openModal('עריכת שאלות — ' + booklet.monthName, function (body, close) {
+      var templateOptions = '<option value="">טען משאלון מוכן…</option>' +
+        global.IgudData.QUESTION_TEMPLATES.map(function (tpl) {
+          return '<option value="' + tpl.id + '">' + U.escapeHtml(tpl.label) + '</option>';
+        }).join('');
+
       body.innerHTML =
+        '<div class="form-group">' +
+          '<label class="field-label">שאלון מוכן (רשות — ניתן לערוך לאחר הטעינה)</label>' +
+          '<select id="q-template" class="form-control">' + templateOptions + '</select>' +
+        '</div>' +
         '<div class="form-group">' +
           '<label class="field-label">שאלות מיקוד וחזרה לחודש ' + U.escapeHtml(booklet.monthName) + '</label>' +
           '<textarea id="q-text" class="form-control" rows="5">' + U.escapeHtml(booklet.reviewQuestions) + '</textarea>' +
@@ -42,15 +51,25 @@
           '<button class="btn btn-outline" id="q-cancel">ביטול</button>' +
           '<button class="btn btn-primary" id="q-save">שמירה</button>' +
         '</div>';
+
+      var textarea = body.querySelector('#q-text');
+      body.querySelector('#q-template').addEventListener('change', function (e) {
+        var chosen = global.IgudData.QUESTION_TEMPLATES.filter(function (t) { return t.id === e.target.value; })[0];
+        if (chosen) textarea.value = chosen.text;
+        e.target.value = '';
+      });
+
       body.querySelector('#q-cancel').addEventListener('click', close);
       body.querySelector('#q-save').addEventListener('click', function () {
-        booklet.reviewQuestions = body.querySelector('#q-text').value.trim();
+        booklet.reviewQuestions = textarea.value.trim();
         global.IgudStore.persist();
         close();
         global.Igud.rerender();
       });
     });
   }
+
+  var MAX_FILE_BYTES = 3 * 1024 * 1024;
 
   function renderBooklets(container, state) {
     var box = U.el('div', { class: 'card card-pad' });
@@ -70,19 +89,95 @@
       select.addEventListener('change', function () {
         booklet.status = select.value;
         global.IgudStore.persist();
+        completeBtn.classList.toggle('is-done', booklet.status === 'מוכן לחלוקה');
       });
       row.appendChild(select);
+
+      var completeBtn = U.el('button', {
+        class: 'btn btn-sm complete-btn' + (booklet.status === 'מוכן לחלוקה' ? ' is-done' : ''),
+        title: 'סמן את החוברת כהושלמה ומוכנה לחלוקה'
+      }, ['✓ הושלם']);
+      completeBtn.addEventListener('click', function () {
+        booklet.status = 'מוכן לחלוקה';
+        select.value = booklet.status;
+        completeBtn.classList.add('is-done');
+        global.IgudStore.persist();
+      });
+      row.appendChild(completeBtn);
 
       var editBtn = U.el('button', { class: 'btn btn-outline btn-sm' }, ['עריכת שאלות']);
       editBtn.addEventListener('click', function () { editQuestionsModal(booklet); });
       row.appendChild(editBtn);
 
+      var actionsCell = U.el('div', { class: 'booklet-file-cell' });
+
+      var fileChip = U.el('span', { class: 'file-chip' });
+      var fileInput = U.el('input', { type: 'file', accept: '.pdf,.doc,.docx', style: 'display:none;' });
+
+      function refreshFileChip() {
+        fileChip.innerHTML = '';
+        if (booklet.fileName) {
+          fileChip.appendChild(U.el('span', { class: 'file-chip-name' }, ['📎 ' + booklet.fileName]));
+          var removeBtn = U.el('button', { class: 'file-chip-remove', title: 'הסרת הקובץ המצורף' }, ['×']);
+          removeBtn.addEventListener('click', function () {
+            booklet.fileName = null;
+            booklet.fileDataUrl = null;
+            global.IgudStore.persist();
+            refreshFileChip();
+          });
+          fileChip.appendChild(removeBtn);
+        }
+      }
+      refreshFileChip();
+
+      var attachBtn = U.el('button', { class: 'btn btn-outline btn-sm' }, ['צירוף קובץ']);
+      attachBtn.addEventListener('click', function () { fileInput.click(); });
+      fileInput.addEventListener('change', function () {
+        var file = fileInput.files[0];
+        if (!file) return;
+        if (file.size > MAX_FILE_BYTES) {
+          window.alert('הקובץ גדול מדי לאחסון מקומי (מקסימום 3MB). לחוברות גדולות יותר יש צורך בשרת/אחסון ענן — ניתן בינתיים להמשיך עם ההדפסה האוטומטית.');
+          fileInput.value = '';
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function () {
+          booklet.fileName = file.name;
+          booklet.fileDataUrl = reader.result;
+          global.IgudStore.persist();
+          refreshFileChip();
+          fileInput.value = '';
+        };
+        reader.readAsDataURL(file);
+      });
+
+      actionsCell.appendChild(attachBtn);
+      actionsCell.appendChild(fileChip);
+      actionsCell.appendChild(fileInput);
+      row.appendChild(actionsCell);
+
       var dlBtn = U.el('button', { class: 'btn btn-primary btn-sm' }, ['הדפסה / הורדה']);
-      dlBtn.addEventListener('click', function () { printBooklet(idx); });
+      dlBtn.addEventListener('click', function () {
+        if (booklet.fileDataUrl) {
+          var link = document.createElement('a');
+          link.href = booklet.fileDataUrl;
+          link.download = booklet.fileName || (booklet.monthName + '.pdf');
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        } else {
+          printBooklet(idx);
+        }
+      });
       row.appendChild(dlBtn);
 
       box.appendChild(row);
     });
+
+    var storageNote = U.el('div', { class: 'storage-note' }, [
+      'קבצים מצורפים נשמרים מקומית בדפדפן (localStorage) ומוגבלים ל-3MB לקובץ. לאחסון קבוע וגדול יותר של חוברות בפועל יידרש חיבור לשרת/אחסון ענן.'
+    ]);
+    box.appendChild(storageNote);
 
     container.appendChild(box);
   }
