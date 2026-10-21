@@ -130,7 +130,7 @@
           U.el('div', { class: 'week-card-meta' }, [meta.label])
         ]);
         if (week.id === state.weeks[state.currentWeekIndex].id) {
-          card.style.outline = '2px solid #c9a44c';
+          card.style.outline = '2px solid var(--gold-500)';
         }
         var extraText = week.mashpia ? ('משפיע: ' + week.mashpia) : (week.farnas ? ('פרנס: ' + week.farnas) : '');
         if (extraText) card.appendChild(U.el('div', { class: 'week-card-extra' }, [extraText]));

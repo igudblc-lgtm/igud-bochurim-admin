@@ -62,9 +62,21 @@
         .forEach(function (student) {
           var meta = U.statusMeta(student.status);
           var tr = U.el('tr', {}, [
-            U.el('td', {}, [student.name]),
+            U.el('td', {}, [
+              U.el('div', { class: 'avatar-cell' }, [
+                U.el('span', { class: 'avatar-circle' }, [U.getInitials(student.name)]),
+                U.el('span', {}, [student.name])
+              ])
+            ]),
             U.el('td', {}, [student.shiur]),
-            U.el('td', {}, [student.attendancePct + '%']),
+            U.el('td', {}, [
+              U.el('div', { class: 'progress-cell' }, [
+                U.el('div', { class: 'progress-bar-track' }, [
+                  U.el('div', { class: 'progress-bar-fill dot-' + meta.color, style: 'width:' + student.attendancePct + '%;' })
+                ]),
+                U.el('span', { class: 'progress-bar-label' }, [student.attendancePct + '%'])
+              ])
+            ]),
             U.el('td', {}, [String(student.articlesCompleted)]),
             U.el('td', {}, [
               U.el('span', { class: 'badge badge-' + meta.color }, [

@@ -40,6 +40,13 @@
     return STATUS_META[status] || STATUS_META.green;
   }
 
+  function getInitials(name) {
+    var parts = String(name || '').trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '';
+    if (parts.length === 1) return parts[0].slice(0, 2);
+    return parts[0].slice(0, 1) + parts[1].slice(0, 1);
+  }
+
   function byId(arr, id) {
     for (var i = 0; i < arr.length; i++) {
       if (arr[i].id === id) return arr[i];
@@ -166,6 +173,7 @@
     typeMeta: typeMeta,
     statusMeta: statusMeta,
     weekHebrewDateLabel: weekHebrewDateLabel,
+    getInitials: getInitials,
     byId: byId,
     el: el,
     escapeHtml: escapeHtml,

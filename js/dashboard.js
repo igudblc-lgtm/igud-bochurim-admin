@@ -133,6 +133,11 @@
           '</div>' +
           '<span class="hero-badge badge-' + typeMeta.color + '">' + typeMeta.label + '</span>' +
         '</div>' +
+        '<div class="hero-pills">' +
+          '<span class="hero-pill">📜 פרשת ' + U.escapeHtml(week.parsha) + '</span>' +
+          '<span class="hero-pill">📅 ' + U.weekHebrewDateLabel(week) + '</span>' +
+          '<span class="hero-pill">💡 ' + typeMeta.label + '</span>' +
+        '</div>' +
         '<div class="hero-details">' +
           '<div><div class="hero-detail-label">מאמר נלמד</div><div class="hero-detail-value">' + U.escapeHtml(week.maamar) + '</div></div>' +
           '<div><div class="hero-detail-label">משפיע אורח</div><div class="hero-detail-value">' + (week.mashpia ? U.escapeHtml(week.mashpia) : '—') + '</div></div>' +
@@ -141,9 +146,9 @@
       '</div>' +
 
       '<div class="quick-actions">' +
-        '<button class="btn btn-primary" id="qa-booklet">שלוף חוברת החודש לדפוס</button>' +
-        '<button class="btn btn-gold" id="qa-poster">הפק מודעות השבוע</button>' +
-        '<button class="btn btn-outline" id="qa-attendance">דיווח נוכחות מהיר</button>' +
+        '<button class="btn btn-primary" id="qa-booklet">🖨️ שלוף חוברת החודש לדפוס</button>' +
+        '<button class="btn btn-gold" id="qa-poster">🪧 הפק מודעות השבוע</button>' +
+        '<button class="btn btn-outline" id="qa-attendance">✅ דיווח נוכחות מהיר</button>' +
       '</div>' +
 
       (readyToPrint
@@ -165,9 +170,9 @@
       '</div>' +
 
       '<div class="kpi-row">' +
-        '<div class="card kpi-card"><div class="kpi-label">משתתפים בשבוע שעבר</div><div class="kpi-value">' + kpis.participants + '</div><div class="kpi-sub">פרשת ' + U.escapeHtml(kpis.lastWeekLabel) + '</div></div>' +
-        '<div class="card kpi-card"><div class="kpi-label">אחוז שסיימו את המאמר</div><div class="kpi-value">' + kpis.learnedPct + '%</div><div class="kpi-sub">מתוך ' + kpis.studentCount + ' בחורים</div></div>' +
-        '<div class="card kpi-card"><div class="kpi-label">דורשים תשומת לב</div><div class="kpi-value">' + kpis.needAttention + '</div><div class="kpi-sub">החסירו פעמיים ברצף או יותר</div></div>' +
+        '<div class="card kpi-card"><div class="kpi-icon icon-blue">👥</div><div class="kpi-label">משתתפים בשבוע שעבר</div><div class="kpi-value">' + kpis.participants + '</div><div class="kpi-sub">פרשת ' + U.escapeHtml(kpis.lastWeekLabel) + '</div></div>' +
+        '<div class="card kpi-card"><div class="kpi-icon icon-green">📘</div><div class="kpi-label">אחוז שסיימו את המאמר</div><div class="kpi-value">' + kpis.learnedPct + '%</div><div class="kpi-sub">מתוך ' + kpis.studentCount + ' בחורים</div></div>' +
+        '<div class="card kpi-card"><div class="kpi-icon icon-red">⚠️</div><div class="kpi-label">דורשים תשומת לב</div><div class="kpi-value">' + kpis.needAttention + '</div><div class="kpi-sub">החסירו פעמיים ברצף או יותר</div></div>' +
       '</div>';
 
     var timelineList = container.querySelector('#timeline-list');

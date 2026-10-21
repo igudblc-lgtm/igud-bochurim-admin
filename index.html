@@ -4,9 +4,18 @@
 <meta charset="utf-8">
 <title>איגוד בחורים – ניהול</title>
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<script>
+(function () {
+  try {
+    var saved = localStorage.getItem('igud-theme');
+    var theme = saved || ((window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  } catch (e) {}
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Heebo:wght@400;500;600;700;800&family=Rubik:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -24,6 +33,7 @@
         <label class="framework-label" for="framework-select">מסגרת מוצגת</label>
         <select id="framework-select" class="framework-select"></select>
       </div>
+      <button type="button" id="theme-toggle" class="theme-toggle-btn"></button>
       <div class="role-block" id="role-block"></div>
     </div>
 

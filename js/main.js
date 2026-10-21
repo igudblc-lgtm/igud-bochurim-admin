@@ -141,6 +141,29 @@
     el.appendChild(switchBtn);
   }
 
+  function updateThemeToggleLabel() {
+    var btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.textContent = isDark ? '☀️ עיצוב בהיר' : '🌙 עיצוב כהה';
+  }
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    try { localStorage.setItem('igud-theme', theme); } catch (e) {}
+    updateThemeToggleLabel();
+  }
+
+  function initThemeToggle() {
+    updateThemeToggleLabel();
+    var btn = document.getElementById('theme-toggle');
+    if (!btn) return;
+    btn.addEventListener('click', function () {
+      var current = document.documentElement.getAttribute('data-theme');
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
+  }
+
   function initCloudSync() {
     if (!global.IgudCloud || !global.IgudCloud.isConfigured()) return;
     global.IgudCloud.init();
@@ -156,6 +179,7 @@
   global.Igud.closeModal = closeModal;
 
   document.addEventListener('DOMContentLoaded', function () {
+    initThemeToggle();
     initFrameworkSelect();
     initNav();
     renderRoleBlock();
