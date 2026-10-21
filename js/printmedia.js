@@ -31,6 +31,21 @@
     window.print();
   }
 
+  function openOrDownloadBooklet(idx) {
+    var state = global.IgudStore.getState();
+    var booklet = state.booklets[idx];
+    if (booklet.fileDataUrl) {
+      var link = document.createElement('a');
+      link.href = booklet.fileDataUrl;
+      link.download = booklet.fileName || (booklet.monthName + '.pdf');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } else {
+      printBooklet(idx);
+    }
+  }
+
   function editQuestionsModal(booklet) {
     global.Igud.openModal('עריכת שאלות — ' + booklet.monthName, function (body, close) {
       var templateOptions = '<option value="">טען משאלון מוכן…</option>' +
@@ -157,18 +172,7 @@
       row.appendChild(actionsCell);
 
       var dlBtn = U.el('button', { class: 'btn btn-primary btn-sm' }, ['הדפסה / הורדה']);
-      dlBtn.addEventListener('click', function () {
-        if (booklet.fileDataUrl) {
-          var link = document.createElement('a');
-          link.href = booklet.fileDataUrl;
-          link.download = booklet.fileName || (booklet.monthName + '.pdf');
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        } else {
-          printBooklet(idx);
-        }
-      });
+      dlBtn.addEventListener('click', function () { openOrDownloadBooklet(idx); });
       row.appendChild(dlBtn);
 
       box.appendChild(row);
@@ -312,6 +316,70 @@
     container.appendChild(section);
   }
 
+  function renderSearch(container, state) {
+    var box = U.el('div', { class: 'card card-pad search-card' });
+    box.appendChild(U.el('div', { class: 'section-title' }, ['חיפוש חומר לימוד']));
+    box.appendChild(U.el('div', { class: 'field-label' }, ['חיפוש לפי חודש, מאמר, פרשה או משפיע — לדוגמה "אייר" או "פדה בשלום"']));
+    var input = U.el('input', { type: 'text', class: 'form-control', placeholder: 'מה לומדים בחודש אייר?' });
+    var resultsBox = U.el('div', { class: 'search-results' });
+    box.appendChild(input);
+    box.appendChild(resultsBox);
+
+    function render_results(query) {
+      resultsBox.innerHTML = '';
+      var q = query.trim();
+      if (!q) return;
+
+      var matches = state.weeks.filter(function (w) {
+        return w.monthName.indexOf(q) > -1 ||
+          w.maamar.indexOf(q) > -1 ||
+          w.parsha.indexOf(q) > -1 ||
+          (w.mashpia && w.mashpia.indexOf(q) > -1);
+      });
+
+      if (!matches.length) {
+        resultsBox.appendChild(U.el('div', { class: 'search-empty' }, ['לא נמצאו תוצאות עבור "' + q + '"']));
+        return;
+      }
+
+      var byMonth = {};
+      matches.forEach(function (w) {
+        (byMonth[w.monthIndex] = byMonth[w.monthIndex] || []).push(w);
+      });
+
+      Object.keys(byMonth).sort(function (a, b) { return a - b; }).forEach(function (key) {
+        var monthIndex = Number(key);
+        var weeksForMonth = byMonth[monthIndex];
+        var booklet = state.booklets[monthIndex];
+
+        var row = U.el('div', { class: 'search-result-row' });
+        row.appendChild(U.el('div', { class: 'search-result-month' }, [weeksForMonth[0].monthName + ' · ' + booklet.status]));
+
+        var list = U.el('div', { class: 'search-result-weeks' });
+        weeksForMonth.forEach(function (w) {
+          list.appendChild(U.el('div', { class: 'search-result-week' }, [
+            'פרשת ' + w.parsha + ' — ' + w.maamar + (w.mashpia ? ' (משפיע: ' + w.mashpia + ')' : '')
+          ]));
+        });
+        row.appendChild(list);
+
+        var actions = U.el('div', { class: 'search-result-actions' });
+        var openBtn = U.el('button', { class: 'btn btn-primary btn-sm' }, [booklet.fileDataUrl ? 'פתיחת החוברת המצורפת' : 'הפקת חוברת']);
+        openBtn.addEventListener('click', function () { openOrDownloadBooklet(monthIndex); });
+        var jumpBtn = U.el('button', { class: 'btn btn-outline btn-sm' }, ['צפייה במפת דרכים']);
+        jumpBtn.addEventListener('click', function () { global.Igud.navigate('roadmap', { scrollTo: 'month-' + monthIndex }); });
+        actions.appendChild(openBtn);
+        actions.appendChild(jumpBtn);
+        row.appendChild(actions);
+
+        resultsBox.appendChild(row);
+      });
+    }
+
+    input.addEventListener('input', function () { render_results(input.value); });
+    container.appendChild(box);
+  }
+
   function render(container) {
     var state = global.IgudStore.getState();
     container.innerHTML =
@@ -319,6 +387,7 @@
         '<h1 class="page-title">מרכז חוברות ומודעות</h1>' +
         '<p class="page-sub">ניהול חוברות הלימוד החודשיות והפקת מודעות תלייה</p>' +
       '</div>';
+    renderSearch(container, state);
     renderBooklets(container, state);
     renderPosters(container);
   }

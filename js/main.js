@@ -20,8 +20,17 @@
     global.Igud.screens[route].render(contentRoot);
     window.scrollTo(0, 0);
     if (opts.scrollTo) {
-      var target = document.getElementById(opts.scrollTo);
-      if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      var scrollToTarget = function () {
+        requestAnimationFrame(function () {
+          var target = document.getElementById(opts.scrollTo);
+          if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      };
+      if (document.fonts && document.fonts.ready) {
+        document.fonts.ready.then(scrollToTarget);
+      } else {
+        setTimeout(scrollToTarget, 50);
+      }
     }
   }
 
