@@ -26,6 +26,16 @@
     'וידעת היום', 'כימי צאתך מארץ מצרים', 'ישמח משה'
   ];
 
+  var REBBEIM = [
+    'אדמו"ר הזקן בעל התניא זיע"א',
+    'אדמו"ר האמצעי זיע"א',
+    'אדמו"ר הצמח צדק זיע"א',
+    'אדמו"ר מוהר"ש זיע"א',
+    'אדמו"ר מוהרש"ב זיע"א',
+    'אדמו"ר מוהריי"צ זיע"א',
+    'כ"ק אדמו"ר זי"ע'
+  ];
+
   var MASHPIIM = [
     'הרב מנחם זאב גרינברג', 'הרב יוסף יצחק לרר', 'הרב שלום דובער וולף',
     'הרב ברוך שלום קפלן', 'הרב לוי יצחק רז', 'הרב ישראל יודל רוזנפלד',
@@ -88,6 +98,7 @@
         }
 
         var maamar = MAAMARIM[maamarCursor % MAAMARIM.length];
+        var maamarSource = REBBEIM[maamarCursor % REBBEIM.length];
         maamarCursor += 1;
 
         var week = {
@@ -98,6 +109,7 @@
           parsha: parsha,
           type: type,
           maamar: maamar,
+          maamarSource: maamarSource,
           mashpia: type === 'guest' ? pick(MASHPIIM, rnd) : '',
           farnas: rnd() > 0.35 ? pick(FARNASIM, rnd) : '',
           tasks: [

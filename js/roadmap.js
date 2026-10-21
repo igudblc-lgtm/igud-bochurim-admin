@@ -25,10 +25,17 @@
             '<input id="m-farnas" class="form-control" value="' + U.escapeHtml(week.farnas) + '">' +
           '</div>' +
         '</div>' +
-        '<div class="form-group">' +
-          '<label class="field-label">מאמר נלמד</label>' +
-          '<input id="m-maamar" class="form-control" value="' + U.escapeHtml(week.maamar) + '">' +
+        '<div class="form-row">' +
+          '<div class="form-group">' +
+            '<label class="field-label">מאמר נלמד (ד"ה)</label>' +
+            '<input id="m-maamar" class="form-control" value="' + U.escapeHtml(week.maamar) + '">' +
+          '</div>' +
+          '<div class="form-group">' +
+            '<label class="field-label">מקור המאמר</label>' +
+            '<input id="m-maamar-source" class="form-control" value="' + U.escapeHtml(week.maamarSource || '') + '">' +
+          '</div>' +
         '</div>' +
+        '<button class="btn btn-outline btn-sm" id="m-coverpage" type="button" style="margin-bottom:14px;">הפקת דף שער למאמר</button>' +
         '<div class="form-group">' +
           '<label class="field-label">הערות</label>' +
           '<textarea id="m-notes" class="form-control" rows="2">' + U.escapeHtml(week.notes) + '</textarea>' +
@@ -57,12 +64,19 @@
         tasksBox.appendChild(row);
       });
 
+      body.querySelector('#m-coverpage').addEventListener('click', function () {
+        week.maamar = body.querySelector('#m-maamar').value.trim();
+        week.maamarSource = body.querySelector('#m-maamar-source').value.trim();
+        global.Igud.printCoverPage(week.id);
+      });
+
       body.querySelector('#m-cancel').addEventListener('click', close);
       body.querySelector('#m-save').addEventListener('click', function () {
         week.type = body.querySelector('#m-type').value;
         week.mashpia = body.querySelector('#m-mashpia').value.trim();
         week.farnas = body.querySelector('#m-farnas').value.trim();
         week.maamar = body.querySelector('#m-maamar').value.trim();
+        week.maamarSource = body.querySelector('#m-maamar-source').value.trim();
         week.notes = body.querySelector('#m-notes').value.trim();
         global.IgudStore.persist();
         close();
