@@ -87,6 +87,12 @@
       taskStatus: {},
       branches: defaultBranches(),
       security: { adminCode: '770' },
+      printSpecs: {
+        printShopEmail: '',
+        quantity: 30,
+        paperSize: 'A4',
+        instructions: 'הדפסה דו-צדדית, כריכה בנייר רך'
+      },
       currentWeekIndex: D.CURRENT_WEEK_INDEX
     };
   }
@@ -95,6 +101,13 @@
     if (!parsed.branches || !parsed.branches.length) parsed.branches = defaultBranches();
     if (!parsed.security) parsed.security = { adminCode: '770' };
     if (!parsed.taskStatus) parsed.taskStatus = {};
+    if (!parsed.printSpecs) {
+      parsed.printSpecs = { printShopEmail: '', quantity: 30, paperSize: 'A4', instructions: 'הדפסה דו-צדדית, כריכה בנייר רך' };
+    }
+    (parsed.booklets || []).forEach(function (b) {
+      if (b.corePdfName === undefined) b.corePdfName = null;
+      if (b.corePdfDataUrl === undefined) b.corePdfDataUrl = null;
+    });
     (parsed.students || []).forEach(function (s) {
       if (!s.branchId) s.branchId = D.MAIN_BRANCH_ID;
     });

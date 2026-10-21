@@ -30,6 +30,52 @@
     return notes.slice(0, 5);
   }
 
+  function findReadyForPrintBooklet(state) {
+    var idx = state.currentWeekIndex;
+    for (var i = idx + 1; i < Math.min(state.weeks.length, idx + 3); i++) {
+      if (state.weeks[i].monthIndex !== state.weeks[i - 1].monthIndex) {
+        var diff = i - idx;
+        if (diff <= 1) {
+          var monthIndex = state.weeks[i].monthIndex;
+          var booklet = state.booklets[monthIndex];
+          if (booklet && booklet.corePdfDataUrl) {
+            return { monthIndex: monthIndex, booklet: booklet };
+          }
+        }
+        break;
+      }
+    }
+    return null;
+  }
+
+  function openPrintPreviewModal(monthIndex, booklet) {
+    global.Igud.openModal('תצוגה מקדימה — חוברת ' + booklet.monthName, function (body, close) {
+      body.innerHTML =
+        '<div id="preview-status" class="field-label" style="margin-bottom:10px;">מכין תצוגה מקדימה...</div>' +
+        '<div id="preview-frame-wrap" style="border:1px solid var(--border);border-radius:8px;overflow:hidden;height:420px;"></div>' +
+        '<div class="modal-footer">' +
+          '<button class="btn btn-outline" id="preview-edit-questions">עריכת שאלות</button>' +
+          '<button class="btn btn-outline" id="preview-close">סגירה</button>' +
+        '</div>';
+
+      global.Igud.buildMergedBookletPdf(monthIndex).then(function (result) {
+        body.querySelector('#preview-status').textContent = '';
+        var frame = document.createElement('iframe');
+        frame.src = result.url;
+        frame.style.cssText = 'width:100%;height:100%;border:none;';
+        body.querySelector('#preview-frame-wrap').appendChild(frame);
+      }).catch(function (e) {
+        body.querySelector('#preview-status').textContent = 'שגיאה ביצירת התצוגה: ' + e.message;
+      });
+
+      body.querySelector('#preview-close').addEventListener('click', close);
+      body.querySelector('#preview-edit-questions').addEventListener('click', function () {
+        close();
+        global.Igud.editBookletQuestions(booklet);
+      });
+    });
+  }
+
   function computeKpis(state, branchId) {
     var idx = state.currentWeekIndex;
     var lastWeek = state.weeks[idx - 1] || state.weeks[idx];
@@ -68,7 +114,9 @@
     var typeMeta = U.typeMeta(week.type);
     var notifications = buildNotifications(state);
     var session = global.IgudAuth.getSession();
-    var kpis = computeKpis(state, global.IgudAuth.isAdmin() ? null : session.branchId);
+    var isAdmin = global.IgudAuth.isAdmin();
+    var kpis = computeKpis(state, isAdmin ? null : session.branchId);
+    var readyToPrint = isAdmin ? findReadyForPrintBooklet(state) : null;
 
     container.innerHTML =
       '<div class="page-head">' +
@@ -97,6 +145,19 @@
         '<button class="btn btn-gold" id="qa-poster">הפק מודעות השבוע</button>' +
         '<button class="btn btn-outline" id="qa-attendance">דיווח נוכחות מהיר</button>' +
       '</div>' +
+
+      (readyToPrint
+        ? '<div class="card card-pad ready-print-card">' +
+            '<div class="ready-print-title">✅ מוכן לאישור דפוס</div>' +
+            '<div class="ready-print-text">חוברת חודש ' + U.escapeHtml(readyToPrint.booklet.monthName) + ' מוכנה עם תאריכים מעודכנים לשנה זו</div>' +
+            '<div class="ready-print-actions">' +
+              '<button class="btn btn-outline btn-sm" id="rp-preview">👁️ תצוגה מקדימה ועדכון שאלות</button>' +
+              '<button class="btn btn-primary btn-sm" id="rp-approve">✅ אשר והורד קובץ מאוחד לדפוס</button>' +
+              '<button class="btn btn-gold btn-sm" id="rp-email">✉️ שלח הזמנה לבית הדפוס</button>' +
+            '</div>' +
+            '<div id="rp-status" class="field-label" style="margin-top:10px;"></div>' +
+          '</div>'
+        : '') +
 
       '<div class="card card-pad timeline-box">' +
         '<div class="timeline-title">📍 התראות ציר זמן חכמות</div>' +
@@ -131,6 +192,42 @@
           U.el('div', { class: 'timeline-actions' }, [mailBtn, icsBtn])
         ]);
         timelineList.appendChild(row);
+      });
+    }
+
+    if (readyToPrint) {
+      var rpStatus = container.querySelector('#rp-status');
+      container.querySelector('#rp-preview').addEventListener('click', function () {
+        openPrintPreviewModal(readyToPrint.monthIndex, readyToPrint.booklet);
+      });
+      container.querySelector('#rp-approve').addEventListener('click', function () {
+        rpStatus.textContent = 'מכין קובץ מאוחד להדפסה...';
+        global.Igud.buildMergedBookletPdf(readyToPrint.monthIndex).then(function (result) {
+          rpStatus.textContent = '';
+          var link = document.createElement('a');
+          link.href = result.url;
+          link.download = 'חוברת-' + readyToPrint.booklet.monthName + '-מוכן-לדפוס.pdf';
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        }).catch(function (e) {
+          rpStatus.textContent = 'שגיאה: ' + e.message;
+        });
+      });
+      container.querySelector('#rp-email').addEventListener('click', function () {
+        var specs = state.printSpecs;
+        var subject = 'הזמנת הדפסה — חוברת ' + readyToPrint.booklet.monthName + ' · א חסידישע ליל שישי';
+        var body =
+          'שלום,\n\nמבקשים להדפיס את חוברת הלימוד לחודש ' + readyToPrint.booklet.monthName + '.\n\n' +
+          'כמות עותקים: ' + specs.quantity + '\n' +
+          'גודל נייר: ' + specs.paperSize + '\n' +
+          'הנחיות: ' + specs.instructions + '\n\n' +
+          'תודה רבה,\nאיגוד בחורים — א חסידישע ליל שישי';
+        var mailto = U.buildMailtoUrl(subject, body);
+        if (specs.printShopEmail) {
+          mailto = mailto.replace('mailto:?', 'mailto:' + encodeURIComponent(specs.printShopEmail) + '?');
+        }
+        window.location.href = mailto;
       });
     }
 

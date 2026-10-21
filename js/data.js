@@ -137,7 +137,9 @@
         status: idx < 2 ? 'מוכן לחלוקה' : (idx === 2 ? 'נשלח לדפוס' : (idx === 3 ? 'בעריכה' : 'טרם הוחל')),
         reviewQuestions: 'מהו היסוד המרכזי שלמדנו החודש במאמר? כיצד ניתן ליישם זאת הלכה למעשה בסדר היום?',
         fileName: null,
-        fileDataUrl: null
+        fileDataUrl: null,
+        corePdfName: null,
+        corePdfDataUrl: null
       };
     });
   }

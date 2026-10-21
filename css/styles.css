@@ -253,6 +253,15 @@ button, select, input, textarea { font-family: inherit; }
 
 .quick-actions { display: flex; gap: 12px; margin: 20px 0; flex-wrap: wrap; }
 
+.ready-print-card {
+  border: 2px solid var(--gold-500);
+  background: linear-gradient(135deg, var(--gold-100), #fff 60%);
+  margin-bottom: 20px;
+}
+.ready-print-title { font-size: 16px; font-weight: 800; color: var(--navy-900); margin-bottom: 6px; }
+.ready-print-text { font-size: 13.8px; color: var(--text-600); margin-bottom: 14px; }
+.ready-print-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
 .timeline-box { margin-bottom: 20px; }
 .timeline-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; margin-bottom: 14px; }
 .timeline-item {
@@ -413,6 +422,7 @@ button, select, input, textarea { font-family: inherit; }
   border: 1px solid var(--green-100);
 }
 .complete-btn.is-done { background: var(--green-600); color: #fff; border-color: var(--green-600); }
+.has-core { border-color: var(--green-600); color: var(--green-600); }
 
 .booklet-file-cell { display: flex; align-items: center; gap: 8px; }
 .file-chip { display: inline-flex; align-items: center; gap: 6px; }

@@ -86,6 +86,99 @@
     });
   }
 
+  function coreContentModal(booklet, monthIndex) {
+    global.Igud.openModal('תוכן קבוע — ' + booklet.monthName, function (body, close) {
+      body.innerHTML =
+        '<div class="form-group">' +
+          '<div class="field-label">' +
+            'העמודים הקבועים של המאמר עצמו (PDF) — תוכן זה "יזכר" ויחובר אוטומטית בכל שנה לעמוד השער והשאלות המעודכנים.' +
+          '</div>' +
+          '<div id="core-status" style="margin:8px 0 14px;"></div>' +
+          '<input id="core-file" type="file" accept=".pdf" style="display:none;">' +
+          '<div class="admin-btn-row">' +
+            '<button class="btn btn-outline btn-sm" id="core-attach">' + (booklet.corePdfName ? 'החלפת קובץ' : 'צירוף קובץ PDF') + '</button>' +
+            (booklet.corePdfName ? '<button class="btn btn-danger-outline btn-sm" id="core-remove">הסרה</button>' : '') +
+            '<button class="btn btn-gold btn-sm" id="core-preview">תצוגה מקדימה של הקובץ המאוחד</button>' +
+          '</div>' +
+          '<div id="core-preview-status" class="field-label" style="margin-top:10px;"></div>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+          '<button class="btn btn-outline" id="core-close">סגירה</button>' +
+        '</div>';
+
+      var statusBox = body.querySelector('#core-status');
+      function refreshStatus() {
+        statusBox.innerHTML = '';
+        statusBox.appendChild(U.el('span', { class: 'badge ' + (booklet.corePdfName ? 'badge-green' : 'badge-yellow') }, [
+          booklet.corePdfName ? ('📄 ' + booklet.corePdfName) : 'עדיין לא צורף תוכן קבוע'
+        ]));
+      }
+      refreshStatus();
+
+      var fileInput = body.querySelector('#core-file');
+      body.querySelector('#core-attach').addEventListener('click', function () { fileInput.click(); });
+      fileInput.addEventListener('change', function () {
+        var file = fileInput.files[0];
+        if (!file) return;
+
+        function finish(url) {
+          booklet.corePdfName = file.name;
+          booklet.corePdfDataUrl = url;
+          global.IgudStore.persist();
+          refreshStatus();
+          fileInput.value = '';
+          close();
+          global.Igud.rerender();
+        }
+
+        if (global.IgudCloud && global.IgudCloud.isConfigured()) {
+          global.IgudCloud.init();
+          global.IgudCloud.uploadFile('booklets-core/' + booklet.id + '-' + file.name, file).then(finish).catch(function (e) {
+            window.alert('העלאה לענן נכשלה: ' + e.message);
+          });
+          return;
+        }
+
+        if (file.size > 8 * 1024 * 1024) {
+          window.alert('הקובץ גדול מדי לאחסון מקומי (מקסימום 8MB). חברו קודם את Firebase לקבצים גדולים יותר.');
+          fileInput.value = '';
+          return;
+        }
+        var reader = new FileReader();
+        reader.onload = function () { finish(reader.result); };
+        reader.readAsDataURL(file);
+      });
+
+      var removeBtn = body.querySelector('#core-remove');
+      if (removeBtn) {
+        removeBtn.addEventListener('click', function () {
+          booklet.corePdfName = null;
+          booklet.corePdfDataUrl = null;
+          global.IgudStore.persist();
+          close();
+          global.Igud.rerender();
+        });
+      }
+
+      var previewStatus = body.querySelector('#core-preview-status');
+      body.querySelector('#core-preview').addEventListener('click', function () {
+        var previewTab = window.open('', '_blank');
+        if (previewTab) previewTab.document.write('<p style="font-family:sans-serif;padding:20px;">מכין תצוגה מקדימה...</p>');
+        previewStatus.textContent = 'מכין תצוגה מקדימה...';
+        global.Igud.buildMergedBookletPdf(monthIndex).then(function (result) {
+          previewStatus.textContent = '';
+          if (previewTab) previewTab.location.href = result.url;
+          else window.alert('הדפדפן חסם את פתיחת החלון. אפשרו חלונות קופצים לאתר זה ונסו שוב.');
+        }).catch(function (e) {
+          previewStatus.textContent = 'שגיאה ביצירת הקובץ: ' + e.message;
+          if (previewTab) previewTab.close();
+        });
+      });
+
+      body.querySelector('#core-close').addEventListener('click', close);
+    });
+  }
+
   var MAX_FILE_BYTES = 3 * 1024 * 1024;
 
   function renderBooklets(container, state) {
@@ -132,6 +225,10 @@
         var editBtn = U.el('button', { class: 'btn btn-outline btn-sm' }, ['עריכת שאלות']);
         editBtn.addEventListener('click', function () { editQuestionsModal(booklet); });
         row.appendChild(editBtn);
+
+        var coreBtn = U.el('button', { class: 'btn btn-outline btn-sm' + (booklet.corePdfDataUrl ? ' has-core' : '') }, [booklet.corePdfDataUrl ? '📄 תוכן קבוע ✓' : '📄 תוכן קבוע']);
+        coreBtn.addEventListener('click', function () { coreContentModal(booklet, idx); });
+        row.appendChild(coreBtn);
       }
 
       var actionsCell = U.el('div', { class: 'booklet-file-cell' });
@@ -432,4 +529,5 @@
 
   global.Igud.screens.print = { render: render, title: 'מרכז חוברות ומודעות' };
   global.Igud.printBooklet = printBooklet;
+  global.Igud.editBookletQuestions = editQuestionsModal;
 })(window);

@@ -183,6 +183,39 @@
     container.appendChild(box);
   }
 
+  function renderPrintSpecs(container, state) {
+    var box = U.el('div', { class: 'card card-pad' });
+    box.appendChild(U.el('div', { class: 'section-title' }, ['הגדרות דפוס']));
+    box.appendChild(U.el('div', { class: 'field-label' }, ['פרטים אלו ישמשו באופן אוטומטי בהודעת "שלח הזמנה לבית הדפוס" בתא הטייס השבועי.']));
+
+    var specs = state.printSpecs;
+
+    function field(label, key, type) {
+      var wrap = U.el('div', { class: 'form-group' });
+      wrap.appendChild(U.el('label', { class: 'field-label' }, [label]));
+      var input = U.el('input', { type: type || 'text', class: 'form-control', value: specs[key] });
+      input.addEventListener('input', function () {
+        specs[key] = type === 'number' ? Number(input.value) : input.value;
+        global.IgudStore.persist();
+      });
+      wrap.appendChild(input);
+      return wrap;
+    }
+
+    var row1 = U.el('div', { class: 'form-row' }, [
+      field('אימייל בית הדפוס', 'printShopEmail', 'email'),
+      field('כמות עותקים', 'quantity', 'number')
+    ]);
+    var row2 = U.el('div', { class: 'form-row' }, [
+      field('גודל נייר', 'paperSize'),
+      field('הנחיות הדפסה', 'instructions')
+    ]);
+
+    box.appendChild(row1);
+    box.appendChild(row2);
+    container.appendChild(box);
+  }
+
   function renderDangerZone(container) {
     var box = U.el('div', { class: 'card card-pad danger-zone' });
     box.appendChild(U.el('div', { class: 'section-title' }, ['אזור מסוכן']));
@@ -215,6 +248,7 @@
       '</div>';
 
     renderBranches(container, state);
+    renderPrintSpecs(container, state);
     renderBackup(container, state);
     renderCloud(container, state);
     renderDangerZone(container);
