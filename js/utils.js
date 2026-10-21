@@ -111,6 +111,49 @@
     return 'mailto:?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(body);
   }
 
+  function branchTaskKey(branchId, weekId, taskId) {
+    return branchId + '__' + weekId + '__' + taskId;
+  }
+
+  function branchLogKey(branchId, weekId) {
+    return branchId + '__' + weekId;
+  }
+
+  function randomCode4() {
+    return String(Math.floor(1000 + Math.random() * 9000));
+  }
+
+  function downloadJson(filename, dataObj) {
+    var blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setTimeout(function () { URL.revokeObjectURL(url); }, 2000);
+  }
+
+  function readFileAsText(file) {
+    return new Promise(function (resolve, reject) {
+      var reader = new FileReader();
+      reader.onload = function () { resolve(reader.result); };
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  }
+
+  function dataUrlToBlob(dataUrl) {
+    var parts = dataUrl.split(',');
+    var mimeMatch = parts[0].match(/:(.*?);/);
+    var mime = mimeMatch ? mimeMatch[1] : 'application/octet-stream';
+    var binary = atob(parts[1]);
+    var array = new Uint8Array(binary.length);
+    for (var i = 0; i < binary.length; i++) array[i] = binary.charCodeAt(i);
+    return new Blob([array], { type: mime });
+  }
+
   function escapeHtml(str) {
     return String(str == null ? '' : str)
       .replace(/&/g, '&amp;')
@@ -127,6 +170,12 @@
     el: el,
     escapeHtml: escapeHtml,
     downloadIcsEvent: downloadIcsEvent,
-    buildMailtoUrl: buildMailtoUrl
+    buildMailtoUrl: buildMailtoUrl,
+    branchTaskKey: branchTaskKey,
+    branchLogKey: branchLogKey,
+    randomCode4: randomCode4,
+    downloadJson: downloadJson,
+    readFileAsText: readFileAsText,
+    dataUrlToBlob: dataUrlToBlob
   };
 })(window);

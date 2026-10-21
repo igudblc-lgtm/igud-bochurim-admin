@@ -34,13 +34,15 @@
   function openOrDownloadBooklet(idx) {
     var state = global.IgudStore.getState();
     var booklet = state.booklets[idx];
-    if (booklet.fileDataUrl) {
+    if (booklet.fileDataUrl && booklet.fileDataUrl.indexOf('data:') === 0) {
       var link = document.createElement('a');
       link.href = booklet.fileDataUrl;
       link.download = booklet.fileName || (booklet.monthName + '.pdf');
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    } else if (booklet.fileDataUrl) {
+      window.open(booklet.fileDataUrl, '_blank');
     } else {
       printBooklet(idx);
     }
@@ -87,6 +89,7 @@
   var MAX_FILE_BYTES = 3 * 1024 * 1024;
 
   function renderBooklets(container, state) {
+    var isAdmin = global.IgudAuth.isAdmin();
     var box = U.el('div', { class: 'card card-pad' });
     box.appendChild(U.el('div', { class: 'section-title' }, ['חוברות לימוד חודשיות']));
 
@@ -94,35 +97,42 @@
       var row = U.el('div', { class: 'booklet-row' });
       row.appendChild(U.el('div', { class: 'booklet-month' }, [booklet.monthName]));
 
-      var select = U.el('select', { class: 'filter-select' });
-      STATUS_OPTIONS.forEach(function (opt) {
-        var o = U.el('option', { value: opt }, [opt]);
-        if (opt === booklet.status) o.setAttribute('selected', 'selected');
-        select.appendChild(o);
-      });
-      select.style.cssText = 'padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;';
-      select.addEventListener('change', function () {
-        booklet.status = select.value;
-        global.IgudStore.persist();
-        completeBtn.classList.toggle('is-done', booklet.status === 'מוכן לחלוקה');
-      });
-      row.appendChild(select);
+      if (!isAdmin) {
+        row.appendChild(U.el('span', { class: 'badge badge-blue' }, [booklet.status]));
+      }
 
+      var select = U.el('select', { class: 'filter-select' });
       var completeBtn = U.el('button', {
         class: 'btn btn-sm complete-btn' + (booklet.status === 'מוכן לחלוקה' ? ' is-done' : ''),
         title: 'סמן את החוברת כהושלמה ומוכנה לחלוקה'
       }, ['✓ הושלם']);
-      completeBtn.addEventListener('click', function () {
-        booklet.status = 'מוכן לחלוקה';
-        select.value = booklet.status;
-        completeBtn.classList.add('is-done');
-        global.IgudStore.persist();
-      });
-      row.appendChild(completeBtn);
 
-      var editBtn = U.el('button', { class: 'btn btn-outline btn-sm' }, ['עריכת שאלות']);
-      editBtn.addEventListener('click', function () { editQuestionsModal(booklet); });
-      row.appendChild(editBtn);
+      if (isAdmin) {
+        STATUS_OPTIONS.forEach(function (opt) {
+          var o = U.el('option', { value: opt }, [opt]);
+          if (opt === booklet.status) o.setAttribute('selected', 'selected');
+          select.appendChild(o);
+        });
+        select.style.cssText = 'padding:6px 10px;border-radius:8px;border:1px solid var(--border);font-size:12.5px;';
+        select.addEventListener('change', function () {
+          booklet.status = select.value;
+          global.IgudStore.persist();
+          completeBtn.classList.toggle('is-done', booklet.status === 'מוכן לחלוקה');
+        });
+        row.appendChild(select);
+
+        completeBtn.addEventListener('click', function () {
+          booklet.status = 'מוכן לחלוקה';
+          select.value = booklet.status;
+          completeBtn.classList.add('is-done');
+          global.IgudStore.persist();
+        });
+        row.appendChild(completeBtn);
+
+        var editBtn = U.el('button', { class: 'btn btn-outline btn-sm' }, ['עריכת שאלות']);
+        editBtn.addEventListener('click', function () { editQuestionsModal(booklet); });
+        row.appendChild(editBtn);
+      }
 
       var actionsCell = U.el('div', { class: 'booklet-file-cell' });
 
@@ -133,14 +143,16 @@
         fileChip.innerHTML = '';
         if (booklet.fileName) {
           fileChip.appendChild(U.el('span', { class: 'file-chip-name' }, ['📎 ' + booklet.fileName]));
-          var removeBtn = U.el('button', { class: 'file-chip-remove', title: 'הסרת הקובץ המצורף' }, ['×']);
-          removeBtn.addEventListener('click', function () {
-            booklet.fileName = null;
-            booklet.fileDataUrl = null;
-            global.IgudStore.persist();
-            refreshFileChip();
-          });
-          fileChip.appendChild(removeBtn);
+          if (isAdmin) {
+            var removeBtn = U.el('button', { class: 'file-chip-remove', title: 'הסרת הקובץ המצורף' }, ['×']);
+            removeBtn.addEventListener('click', function () {
+              booklet.fileName = null;
+              booklet.fileDataUrl = null;
+              global.IgudStore.persist();
+              refreshFileChip();
+            });
+            fileChip.appendChild(removeBtn);
+          }
         }
       }
       refreshFileChip();
@@ -150,6 +162,27 @@
       fileInput.addEventListener('change', function () {
         var file = fileInput.files[0];
         if (!file) return;
+
+        if (global.IgudCloud && global.IgudCloud.isConfigured()) {
+          if (file.size > 20 * 1024 * 1024) {
+            window.alert('הקובץ גדול מדי (מקסימום 20MB).');
+            fileInput.value = '';
+            return;
+          }
+          booklet.fileName = file.name;
+          global.IgudCloud.init();
+          global.IgudCloud.uploadFile('booklets/' + booklet.id + '-' + file.name, file).then(function (url) {
+            booklet.fileDataUrl = url;
+            global.IgudStore.persist();
+            refreshFileChip();
+            fileInput.value = '';
+          }).catch(function (e) {
+            window.alert('העלאה לענן נכשלה: ' + e.message);
+            fileInput.value = '';
+          });
+          return;
+        }
+
         if (file.size > MAX_FILE_BYTES) {
           window.alert('הקובץ גדול מדי לאחסון מקומי (מקסימום 3MB). לחוברות גדולות יותר יש צורך בשרת/אחסון ענן — ניתן בינתיים להמשיך עם ההדפסה האוטומטית.');
           fileInput.value = '';
@@ -166,9 +199,11 @@
         reader.readAsDataURL(file);
       });
 
-      actionsCell.appendChild(attachBtn);
+      if (isAdmin) {
+        actionsCell.appendChild(attachBtn);
+        actionsCell.appendChild(fileInput);
+      }
       actionsCell.appendChild(fileChip);
-      actionsCell.appendChild(fileInput);
       row.appendChild(actionsCell);
 
       var dlBtn = U.el('button', { class: 'btn btn-primary btn-sm' }, ['הדפסה / הורדה']);
@@ -178,8 +213,11 @@
       box.appendChild(row);
     });
 
+    var cloudOn = global.IgudCloud && global.IgudCloud.isConfigured();
     var storageNote = U.el('div', { class: 'storage-note' }, [
-      'קבצים מצורפים נשמרים מקומית בדפדפן (localStorage) ומוגבלים ל-3MB לקובץ. לאחסון קבוע וגדול יותר של חוברות בפועל יידרש חיבור לשרת/אחסון ענן.'
+      cloudOn
+        ? 'קבצים מצורפים נשמרים באחסון הענן (Firebase Storage) וזמינים מכל מכשיר מחובר.'
+        : 'קבצים מצורפים נשמרים מקומית בדפדפן (localStorage) ומוגבלים ל-3MB לקובץ. לאחסון קבוע וגדול יותר יש לחבר את Firebase (ראו מסך "ניהול מערכת").'
     ]);
     box.appendChild(storageNote);
 

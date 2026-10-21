@@ -104,6 +104,26 @@ button, select, input, textarea { font-family: inherit; }
 }
 .framework-select option { color: var(--text-900); }
 
+.role-block {
+  margin-bottom: 18px;
+  padding: 10px 12px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: var(--radius-sm);
+}
+.role-label { font-size: 12.5px; font-weight: 700; color: #e7edf7; margin-bottom: 6px; }
+.role-switch-btn {
+  width: 100%;
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255,255,255,0.18);
+  background: transparent;
+  color: var(--gold-500);
+  font-size: 11.8px;
+  cursor: pointer;
+}
+.role-switch-btn:hover { background: rgba(255,255,255,0.08); }
+
 .nav {
   display: flex;
   flex-direction: column;
@@ -509,6 +529,46 @@ textarea.form-control, input.form-control {
 .quickcheck-row:last-child { border-bottom: none; }
 .quickcheck-toggles { display: flex; gap: 14px; }
 .quickcheck-toggles label { display: flex; align-items: center; gap: 5px; font-size: 12.3px; color: var(--text-600); }
+
+.branch-badge {
+  display: inline-block;
+  margin-bottom: 14px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  background: var(--blue-100);
+  color: var(--blue-600);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.readonly-note {
+  background: var(--yellow-100);
+  color: var(--yellow-600);
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 12.5px;
+  font-weight: 600;
+  margin-bottom: 14px;
+}
+
+/* ---------- Admin ---------- */
+.branch-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  padding: 11px 4px;
+  border-bottom: 1px solid var(--border);
+}
+.branch-row:last-child { border-bottom: none; }
+.branch-row.inactive { opacity: .5; }
+.branch-name { font-weight: 700; flex: 0 0 160px; }
+.branch-code { font-size: 13px; color: var(--text-600); flex: 1; }
+.branch-actions { display: flex; gap: 8px; }
+.branch-add-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+.branch-add-row input { flex: 1; min-width: 180px; }
+.admin-btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+.danger-zone { border: 1px solid var(--red-100); }
 
 /* ---------- Students ---------- */
 .filter-row { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }

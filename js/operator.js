@@ -8,7 +8,8 @@
     coordination: 'תיאום משפיע / פרנס'
   };
 
-  function renderChecklist(container, week) {
+  function renderChecklist(container, week, branchId) {
+    var state = global.IgudStore.getState();
     var card = U.el('div', { class: 'card card-pad' });
     card.appendChild(U.el('div', { class: 'section-title' }, ['צ\'ק-ליסט תפעולי — פרשת ' + week.parsha]));
 
@@ -18,15 +19,17 @@
       var group = U.el('div', { class: 'checklist-group' });
       group.appendChild(U.el('div', { class: 'checklist-group-title' }, [CATEGORY_META[cat]]));
       tasks.forEach(function (task) {
-        var row = U.el('label', { class: 'checklist-item' + (task.done ? ' done' : '') }, [
+        var key = U.branchTaskKey(branchId, week.id, task.id);
+        var done = !!state.taskStatus[key];
+        var row = U.el('label', { class: 'checklist-item' + (done ? ' done' : '') }, [
           U.el('input', { type: 'checkbox' }),
           U.el('span', {}, [task.label])
         ]);
         var checkbox = row.querySelector('input');
-        checkbox.checked = task.done;
+        checkbox.checked = done;
         checkbox.addEventListener('change', function () {
-          task.done = checkbox.checked;
-          row.classList.toggle('done', task.done);
+          state.taskStatus[key] = checkbox.checked;
+          row.classList.toggle('done', checkbox.checked);
           global.IgudStore.persist();
         });
         group.appendChild(row);
@@ -37,12 +40,13 @@
     container.appendChild(card);
   }
 
-  function renderEveningForm(container, state, week) {
+  function renderEveningForm(container, state, week, branchId) {
     var card = U.el('div', { class: 'card card-pad', id: 'evening-form' });
     card.appendChild(U.el('div', { class: 'section-title' }, ['טופס סיכום ערב']));
 
-    var log = state.eveningLogs[week.id] || { rating: 0, notes: '', participantsCount: 0 };
-    if (!state.eveningLogs[week.id]) state.eveningLogs[week.id] = log;
+    var logKey = U.branchLogKey(branchId, week.id);
+    var log = state.eveningLogs[logKey] || { rating: 0, notes: '', participantsCount: 0 };
+    if (!state.eveningLogs[logKey]) state.eveningLogs[logKey] = log;
 
     card.appendChild(U.el('div', { class: 'field-label' }, ['עד כמה חומר הלימוד היה רלוונטי והבחורים התחברו אליו?']));
     var starRow = U.el('div', { class: 'star-row' });
@@ -72,7 +76,12 @@
     card.appendChild(U.el('div', { class: 'field-label', style: 'margin-top:16px;' }, ['סימון מהיר — נוכחות ולימוד המאמר']));
     var quickBox = U.el('div', { class: 'student-quickcheck' });
 
-    state.students.forEach(function (student) {
+    var branchStudents = state.students.filter(function (s) { return s.branchId === branchId; });
+    if (!branchStudents.length) {
+      quickBox.appendChild(U.el('div', { style: 'padding:14px;color:var(--text-400);font-size:13px;' }, ['אין עדיין בחורים משויכים לסניף זה.']));
+    }
+
+    branchStudents.forEach(function (student) {
       var entry = student.attendance.filter(function (a) { return a.weekId === week.id; })[0];
       if (!entry) {
         entry = { weekId: week.id, present: false, learned: false };
@@ -131,17 +140,38 @@
   function render(container) {
     var state = global.IgudStore.getState();
     var week = state.weeks[state.currentWeekIndex];
+    var isAdmin = global.IgudAuth.isAdmin();
+    var session = global.IgudAuth.getSession();
+    var activeBranches = state.branches.filter(function (b) { return b.active; });
+
+    var branchId = isAdmin ? (activeBranches[0] ? activeBranches[0].id : global.IgudData.MAIN_BRANCH_ID) : session.branchId;
 
     container.innerHTML =
       '<div class="page-head">' +
         '<h1 class="page-title">אחראי ליל שישי</h1>' +
         '<p class="page-sub">צ\'ק-ליסט תפעולי וטופס סיכום לליל שישי הקרוב — פרשת ' + U.escapeHtml(week.parsha) + '</p>' +
       '</div>' +
+      (isAdmin && activeBranches.length > 1
+        ? '<div class="filter-row"><select id="branch-filter">' +
+            activeBranches.map(function (b) { return '<option value="' + b.id + '">' + U.escapeHtml(b.name) + '</option>'; }).join('') +
+          '</select></div>'
+        : (!isAdmin ? '<div class="branch-badge">סניף: ' + U.escapeHtml(session.branchName || '') + '</div>' : '')) +
       '<div class="operator-grid" id="operator-grid"></div>';
 
-    var grid = container.querySelector('#operator-grid');
-    renderChecklist(grid, week);
-    renderEveningForm(grid, state, week);
+    function drawFor(currentBranchId) {
+      var grid = container.querySelector('#operator-grid');
+      grid.innerHTML = '';
+      renderChecklist(grid, week, currentBranchId);
+      renderEveningForm(grid, state, week, currentBranchId);
+    }
+
+    var branchFilter = container.querySelector('#branch-filter');
+    if (branchFilter) {
+      branchFilter.value = branchId;
+      branchFilter.addEventListener('change', function () { drawFor(branchFilter.value); });
+    }
+
+    drawFor(branchId);
   }
 
   global.Igud.screens.operator = { render: render, title: 'אחראי ליל שישי' };

@@ -30,22 +30,36 @@
     return notes.slice(0, 5);
   }
 
-  function computeKpis(state) {
+  function computeKpis(state, branchId) {
     var idx = state.currentWeekIndex;
     var lastWeek = state.weeks[idx - 1] || state.weeks[idx];
-    var log = state.eveningLogs[lastWeek.id];
-    var participants = log ? log.participantsCount : '—';
 
-    var totalStudents = state.students.length;
-    var learnedCount = state.students.filter(function (s) {
+    var students = branchId ? state.students.filter(function (s) { return s.branchId === branchId; }) : state.students;
+
+    var participants;
+    if (branchId) {
+      var log = state.eveningLogs[U.branchLogKey(branchId, lastWeek.id)];
+      participants = log ? log.participantsCount : '—';
+    } else {
+      var sum = 0;
+      var found = false;
+      state.branches.forEach(function (b) {
+        var l = state.eveningLogs[U.branchLogKey(b.id, lastWeek.id)];
+        if (l) { sum += l.participantsCount; found = true; }
+      });
+      participants = found ? sum : '—';
+    }
+
+    var totalStudents = students.length;
+    var learnedCount = students.filter(function (s) {
       var entry = s.attendance.filter(function (a) { return a.weekId === lastWeek.id; })[0];
       return entry && entry.learned;
     }).length;
     var learnedPct = totalStudents ? Math.round((learnedCount / totalStudents) * 100) : 0;
 
-    var needAttention = state.students.filter(function (s) { return s.consecutiveAbsences >= 2; }).length;
+    var needAttention = students.filter(function (s) { return s.consecutiveAbsences >= 2; }).length;
 
-    return { participants: participants, learnedPct: learnedPct, needAttention: needAttention, lastWeekLabel: lastWeek.parsha };
+    return { participants: participants, learnedPct: learnedPct, needAttention: needAttention, lastWeekLabel: lastWeek.parsha, studentCount: totalStudents };
   }
 
   function render(container) {
@@ -53,7 +67,8 @@
     var week = state.weeks[state.currentWeekIndex];
     var typeMeta = U.typeMeta(week.type);
     var notifications = buildNotifications(state);
-    var kpis = computeKpis(state);
+    var session = global.IgudAuth.getSession();
+    var kpis = computeKpis(state, global.IgudAuth.isAdmin() ? null : session.branchId);
 
     container.innerHTML =
       '<div class="page-head">' +
@@ -90,7 +105,7 @@
 
       '<div class="kpi-row">' +
         '<div class="card kpi-card"><div class="kpi-label">משתתפים בשבוע שעבר</div><div class="kpi-value">' + kpis.participants + '</div><div class="kpi-sub">פרשת ' + U.escapeHtml(kpis.lastWeekLabel) + '</div></div>' +
-        '<div class="card kpi-card"><div class="kpi-label">אחוז שסיימו את המאמר</div><div class="kpi-value">' + kpis.learnedPct + '%</div><div class="kpi-sub">מתוך ' + state.students.length + ' בחורים</div></div>' +
+        '<div class="card kpi-card"><div class="kpi-label">אחוז שסיימו את המאמר</div><div class="kpi-value">' + kpis.learnedPct + '%</div><div class="kpi-sub">מתוך ' + kpis.studentCount + ' בחורים</div></div>' +
         '<div class="card kpi-card"><div class="kpi-label">דורשים תשומת לב</div><div class="kpi-value">' + kpis.needAttention + '</div><div class="kpi-sub">החסירו פעמיים ברצף או יותר</div></div>' +
       '</div>';
 

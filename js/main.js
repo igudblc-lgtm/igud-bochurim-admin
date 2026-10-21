@@ -6,14 +6,20 @@
   var currentRoute = 'dashboard';
 
   function renderNav() {
+    var isAdmin = global.IgudAuth.isAdmin();
     document.querySelectorAll('.nav-item').forEach(function (btn) {
-      btn.classList.toggle('active', btn.getAttribute('data-route') === currentRoute);
+      var route = btn.getAttribute('data-route');
+      btn.classList.toggle('active', route === currentRoute);
+      if (btn.hasAttribute('data-admin-only')) {
+        btn.style.display = isAdmin ? '' : 'none';
+      }
     });
   }
 
   function navigate(route, opts) {
     opts = opts || {};
     if (!global.Igud.screens[route]) route = 'dashboard';
+    if (route === 'admin' && !global.IgudAuth.isAdmin()) route = 'dashboard';
     currentRoute = route;
     renderNav();
     contentRoot.innerHTML = '';
@@ -35,6 +41,7 @@
   }
 
   function rerender() {
+    renderRoleBlock();
     navigate(currentRoute);
   }
 
@@ -85,12 +92,61 @@
     });
   }
 
-  function initResetButton() {
-    document.getElementById('reset-demo-btn').addEventListener('click', function () {
-      if (window.confirm('לאפס את כל הנתונים חזרה לדמו ההתחלתי? פעולה זו תמחק שינויים שנעשו.')) {
-        global.IgudStore.resetToDemo();
-        rerender();
+  function openLoginModal() {
+    openModal('התחברות למערכת', function (body, close) {
+      body.innerHTML =
+        '<div class="form-group">' +
+          '<div class="field-label">הזינו קוד גישה — קוד מנהל ראשי או קוד סניף בן 4 ספרות</div>' +
+          '<input id="login-code" type="password" class="form-control" placeholder="קוד גישה" inputmode="numeric">' +
+          '<div id="login-error" style="color:var(--red-600);font-size:12.5px;margin-top:8px;display:none;">קוד לא נמצא, נסו שוב.</div>' +
+        '</div>' +
+        '<div class="modal-footer">' +
+          '<button class="btn btn-outline" id="login-cancel">ביטול</button>' +
+          '<button class="btn btn-primary" id="login-confirm">כניסה</button>' +
+        '</div>';
+
+      var input = body.querySelector('#login-code');
+      var errorBox = body.querySelector('#login-error');
+
+      function trySubmit() {
+        var result = global.IgudAuth.loginWithCode(input.value.trim());
+        if (result.ok) {
+          close();
+          rerender();
+        } else {
+          errorBox.style.display = 'block';
+        }
       }
+
+      input.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') trySubmit();
+      });
+      body.querySelector('#login-cancel').addEventListener('click', close);
+      body.querySelector('#login-confirm').addEventListener('click', trySubmit);
+      input.focus();
+    });
+  }
+
+  function renderRoleBlock() {
+    var el = document.getElementById('role-block');
+    if (!el) return;
+    var session = global.IgudAuth.getSession();
+    el.innerHTML = '';
+    var label = session.role === 'admin'
+      ? 'מחובר כמנהל מערכת'
+      : 'רכז סניף: ' + global.IgudUtils.escapeHtml(session.branchName || '');
+    el.appendChild(global.IgudUtils.el('div', { class: 'role-label' }, [label]));
+    var switchBtn = global.IgudUtils.el('button', { class: 'role-switch-btn' }, ['החלפת משתמש / קוד גישה']);
+    switchBtn.addEventListener('click', openLoginModal);
+    el.appendChild(switchBtn);
+  }
+
+  function initCloudSync() {
+    if (!global.IgudCloud || !global.IgudCloud.isConfigured()) return;
+    global.IgudCloud.init();
+    global.IgudCloud.subscribeState(function (remoteState) {
+      global.IgudStore.setState(remoteState, { skipCloudPush: true });
+      rerender();
     });
   }
 
@@ -102,7 +158,9 @@
   document.addEventListener('DOMContentLoaded', function () {
     initFrameworkSelect();
     initNav();
-    initResetButton();
+    renderRoleBlock();
+    renderNav();
     navigate('dashboard');
+    initCloudSync();
   });
 })(window);

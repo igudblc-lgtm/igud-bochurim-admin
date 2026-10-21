@@ -39,6 +39,7 @@
         id: 's-' + i,
         name: name,
         shiur: shiur,
+        branchId: D.MAIN_BRANCH_ID,
         attendance: attendance,
         attendancePct: attendancePct,
         articlesCompleted: articlesCompleted,
@@ -52,13 +53,19 @@
     var rnd = D.seedRandom(99);
     var logs = {};
     weeks.slice(Math.max(0, D.CURRENT_WEEK_INDEX - 5), D.CURRENT_WEEK_INDEX).forEach(function (w) {
-      logs[w.id] = {
+      logs[D.MAIN_BRANCH_ID + '__' + w.id] = {
         rating: 3 + Math.round(rnd() * 2),
         notes: '',
         participantsCount: 14 + Math.floor(rnd() * 8)
       };
     });
     return logs;
+  }
+
+  function defaultBranches() {
+    return [
+      { id: D.MAIN_BRANCH_ID, name: 'הסניף המרכזי', code: '', active: true }
+    ];
   }
 
   function freshState() {
@@ -77,8 +84,29 @@
       booklets: D.buildBooklets(),
       students: buildStudents(weeks),
       eveningLogs: buildEveningLogs(weeks),
+      taskStatus: {},
+      branches: defaultBranches(),
+      security: { adminCode: '770' },
       currentWeekIndex: D.CURRENT_WEEK_INDEX
     };
+  }
+
+  function migrate(parsed) {
+    if (!parsed.branches || !parsed.branches.length) parsed.branches = defaultBranches();
+    if (!parsed.security) parsed.security = { adminCode: '770' };
+    if (!parsed.taskStatus) parsed.taskStatus = {};
+    (parsed.students || []).forEach(function (s) {
+      if (!s.branchId) s.branchId = D.MAIN_BRANCH_ID;
+    });
+    if (parsed.eveningLogs) {
+      var migratedLogs = {};
+      Object.keys(parsed.eveningLogs).forEach(function (key) {
+        var newKey = key.indexOf('__') === -1 ? (D.MAIN_BRANCH_ID + '__' + key) : key;
+        migratedLogs[newKey] = parsed.eveningLogs[key];
+      });
+      parsed.eveningLogs = migratedLogs;
+    }
+    return parsed;
   }
 
   function load() {
@@ -86,7 +114,7 @@
       var raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         var parsed = JSON.parse(raw);
-        if (parsed && parsed.weeks && parsed.weeks.length) return parsed;
+        if (parsed && parsed.weeks && parsed.weeks.length) return migrate(parsed);
       }
     } catch (e) {
       console.warn('igud-store: failed to parse saved state, reseeding', e);
@@ -110,18 +138,34 @@
     return state;
   }
 
-  function persist() {
+  function pushToCloudIfNeeded(opts) {
+    if (opts && opts.skipCloudPush) return;
+    if (global.IgudCloud && global.IgudCloud.isConfigured()) {
+      global.IgudCloud.pushState(state);
+    }
+  }
+
+  function persist(opts) {
     save(state);
+    pushToCloudIfNeeded(opts);
+  }
+
+  function setState(newState, opts) {
+    state = migrate(newState);
+    save(state);
+    pushToCloudIfNeeded(opts);
   }
 
   function resetToDemo() {
     state = freshState();
     save(state);
+    pushToCloudIfNeeded();
   }
 
   global.IgudStore = {
     getState: getState,
     persist: persist,
+    setState: setState,
     resetToDemo: resetToDemo
   };
 })(window);

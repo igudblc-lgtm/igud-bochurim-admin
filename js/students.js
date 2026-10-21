@@ -5,12 +5,16 @@
 
   function render(container) {
     var state = global.IgudStore.getState();
+    var isAdmin = global.IgudAuth.isAdmin();
+    var session = global.IgudAuth.getSession();
+    var activeBranches = state.branches.filter(function (b) { return b.active; });
 
     container.innerHTML =
       '<div class="page-head">' +
         '<h1 class="page-title">מצב הבחורים</h1>' +
-        '<p class="page-sub">מעקב נוכחות, התקדמות בלימוד וחיווי רמזור לכל בחורי המסגרת</p>' +
+        '<p class="page-sub">מעקב נוכחות, התקדמות בלימוד וחיווי רמזור ל' + (isAdmin ? 'כל בחורי המסגרת' : 'בחורי הסניף שלך') + '</p>' +
       '</div>' +
+      (!isAdmin ? '<div class="branch-badge">סניף: ' + U.escapeHtml(session.branchName || '') + '</div>' : '') +
       '<div class="filter-row">' +
         '<select id="filter-status">' +
           '<option value="">כל הסטטוסים</option>' +
@@ -22,6 +26,11 @@
           '<option value="">כל השיעורים</option>' +
           global.IgudData.SHIURIM.map(function (s) { return '<option value="' + U.escapeHtml(s) + '">' + U.escapeHtml(s) + '</option>'; }).join('') +
         '</select>' +
+        (isAdmin && activeBranches.length > 1
+          ? '<select id="filter-branch"><option value="">כל הסניפים</option>' +
+            activeBranches.map(function (b) { return '<option value="' + b.id + '">' + U.escapeHtml(b.name) + '</option>'; }).join('') +
+            '</select>'
+          : '') +
       '</div>' +
       '<div class="card card-pad">' +
         '<table class="students-table">' +
@@ -35,12 +44,15 @@
     var tbody = container.querySelector('#students-tbody');
     var statusFilter = container.querySelector('#filter-status');
     var shiurFilter = container.querySelector('#filter-shiur');
+    var branchFilter = container.querySelector('#filter-branch');
 
     function draw() {
       var statusVal = statusFilter.value;
       var shiurVal = shiurFilter.value;
+      var branchVal = branchFilter ? branchFilter.value : (isAdmin ? '' : session.branchId);
       tbody.innerHTML = '';
       state.students
+        .filter(function (s) { return !branchVal || s.branchId === branchVal; })
         .filter(function (s) { return !statusVal || s.status === statusVal; })
         .filter(function (s) { return !shiurVal || s.shiur === shiurVal; })
         .sort(function (a, b) {
@@ -70,6 +82,7 @@
 
     statusFilter.addEventListener('change', draw);
     shiurFilter.addEventListener('change', draw);
+    if (branchFilter) branchFilter.addEventListener('change', draw);
     draw();
   }
 
