@@ -8,6 +8,7 @@
     var state = global.IgudStore.getState();
     var booklet = state.booklets[monthIndex];
     var monthWeeks = state.weeks.filter(function (w) { return w.monthIndex === monthIndex; });
+    var specs = state.printSpecs || {};
     var printRoot = document.getElementById('print-root');
 
     var weeksHtml = monthWeeks.map(function (w) {
@@ -17,16 +18,27 @@
       '</div>';
     }).join('');
 
+    var creditPageHtml = specs.publisherName
+      ? '<div style="page-break-before:always;height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;direction:rtl;font-family:Heebo,Arial,sans-serif;">' +
+          '<div style="font-size:16px;line-height:1.9;color:#555;">חומרי הלימוד באדיבות המו"ל<br>' +
+            '<span style="font-size:20px;font-weight:700;color:#16213a;">' + U.escapeHtml(specs.publisherName) + '</span>' +
+          '</div>' +
+        '</div>'
+      : '';
+
     printRoot.innerHTML =
       '<div style="direction:rtl;font-family:Heebo,Arial,sans-serif;padding:30px;">' +
+        '<div style="text-align:center;"><img src="' + global.IGUD_LOGO_DATA_URL + '" style="max-width:200px;height:auto;margin-bottom:10px;"></div>' +
         '<h1 style="text-align:center;">חוברת לימוד חודשית — ' + U.escapeHtml(booklet.monthName) + '</h1>' +
         '<h3 style="text-align:center;color:#555;">א חסידישע ליל שישי</h3>' +
+        (specs.scheduleInfo ? '<div style="font-size:12.5px;color:#555;text-align:center;background:#f7f3ea;border-radius:8px;padding:10px 14px;margin:14px 0;">' + U.escapeHtml(specs.scheduleInfo) + '</div>' : '') +
         '<hr>' +
         '<h3>מאמרים ומפגשים</h3>' +
         weeksHtml +
         '<h3>שאלות לעיון וחזרה</h3>' +
         '<p style="white-space:pre-line;line-height:1.8;">' + U.escapeHtml(booklet.reviewQuestions) + '</p>' +
-      '</div>';
+      '</div>' +
+      creditPageHtml;
 
     window.print();
   }
@@ -42,22 +54,35 @@
   }
 
   function editQuestionsModal(booklet) {
+    var state = global.IgudStore.getState();
+    var monthWeeks = state.weeks.filter(function (w) { return w.monthName === booklet.monthName; });
+
     global.Igud.openModal('עריכת שאלות — ' + booklet.monthName, function (body, close) {
-      var templateOptions = '<option value="">טען משאלון מוכן…</option>' +
+      var templateOptions = '<option value="">טען משאלון כללי מוכן…</option>' +
         global.IgudData.QUESTION_TEMPLATES.map(function (tpl) {
           return '<option value="' + tpl.id + '">' + U.escapeHtml(tpl.label) + '</option>';
         }).join('');
 
+      var maamarOptions = '<option value="">הוספת שאלון אמיתי לפי מאמר שנלמד החודש…</option>' +
+        monthWeeks.map(function (w) {
+          return '<option value="' + U.escapeHtml(w.maamar) + '">' + U.escapeHtml('ד"ה ' + w.maamar + ' (פרשת ' + w.parsha + ')') + '</option>';
+        }).join('');
+
       body.innerHTML =
         '<div class="form-group">' +
-          '<label class="field-label">שאלון מוכן (רשות — ניתן לערוך לאחר הטעינה)</label>' +
+          '<label class="field-label">שאלון כללי (רשות — ניתן לערוך לאחר הטעינה)</label>' +
           '<select id="q-template" class="form-control">' + templateOptions + '</select>' +
         '</div>' +
         '<div class="form-group">' +
+          '<label class="field-label">שאלון אמיתי לפי מאמר (מבוסס על סגנון השאלונים שלכם בפועל)</label>' +
+          '<select id="q-maamar" class="form-control">' + maamarOptions + '</select>' +
+        '</div>' +
+        '<div class="form-group">' +
           '<label class="field-label">שאלות מיקוד וחזרה לחודש ' + U.escapeHtml(booklet.monthName) + '</label>' +
-          '<textarea id="q-text" class="form-control" rows="5">' + U.escapeHtml(booklet.reviewQuestions) + '</textarea>' +
+          '<textarea id="q-text" class="form-control" rows="7">' + U.escapeHtml(booklet.reviewQuestions) + '</textarea>' +
         '</div>' +
         '<div class="modal-footer">' +
+          '<button class="btn btn-outline" id="q-regenerate">חידוש אוטומטי מכל מאמרי החודש</button>' +
           '<button class="btn btn-outline" id="q-cancel">ביטול</button>' +
           '<button class="btn btn-primary" id="q-save">שמירה</button>' +
         '</div>';
@@ -67,6 +92,21 @@
         var chosen = global.IgudData.QUESTION_TEMPLATES.filter(function (t) { return t.id === e.target.value; })[0];
         if (chosen) textarea.value = chosen.text;
         e.target.value = '';
+      });
+      body.querySelector('#q-maamar').addEventListener('change', function (e) {
+        var maamar = e.target.value;
+        if (!maamar) return;
+        var week = monthWeeks.filter(function (w) { return w.maamar === maamar; })[0];
+        var qs = global.IgudData.MAAMAR_QUESTIONNAIRES[maamar] || '';
+        var block = 'מאמר ד"ה ' + maamar + (week ? (' (פרשת ' + week.parsha + ')') : '') + ':\n' + qs;
+        textarea.value = textarea.value ? (textarea.value + '\n\n' + block) : block;
+        e.target.value = '';
+      });
+      body.querySelector('#q-regenerate').addEventListener('click', function () {
+        textarea.value = monthWeeks.map(function (w) {
+          var qs = global.IgudData.MAAMAR_QUESTIONNAIRES[w.maamar] || '';
+          return 'מאמר ד"ה ' + w.maamar + ' (פרשת ' + w.parsha + '):\n' + qs;
+        }).join('\n\n');
       });
 
       body.querySelector('#q-cancel').addEventListener('click', close);
@@ -205,11 +245,13 @@
       var card = U.el('div', { class: 'card poster-card' });
       var preview = U.el('div', { class: 'poster-preview accent-' + tpl.accent });
       var photoBox = U.el('div', { class: 'poster-preview-photo', style: 'display:none;' });
-      var titleLine = U.el('div', { class: 'poster-preview-title' }, ['איגוד בחורים · ליל שישי']);
+      var logoImg = U.el('img', { src: global.IGUD_LOGO_DATA_URL, alt: 'איגוד בחורים לומדי חסידות', class: 'poster-logo' });
+      var titleLine = U.el('div', { class: 'poster-preview-title' }, ['א חסידישע ליל שישי']);
       var mainLine = U.el('div', { class: 'poster-preview-main' }, [tpl.name]);
       var subLine = U.el('div', { class: 'poster-preview-sub' }, ['']);
       var dedicationLine = U.el('div', { class: 'poster-preview-dedication' }, ['']);
       preview.appendChild(photoBox);
+      preview.appendChild(logoImg);
       preview.appendChild(titleLine);
       preview.appendChild(mainLine);
       preview.appendChild(subLine);
@@ -307,14 +349,21 @@
 
       var printPosterBtn = U.el('button', { class: 'btn btn-gold', style: 'width:100%;justify-content:center;' }, ['הדפסת מודעה']);
       printPosterBtn.addEventListener('click', function () {
+        var accentHex = { gold: '#c9a44c', navy: '#1e3a8a', purple: '#7c3aed' }[tpl.accent] || '#c9a44c';
         var printRoot = document.getElementById('print-root');
         printRoot.innerHTML =
-          '<div style="direction:rtl;font-family:Heebo,Arial,sans-serif;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:40px;">' +
-            (posterImageDataUrl ? '<img src="' + posterImageDataUrl + '" style="max-width:320px;max-height:320px;border-radius:14px;object-fit:cover;">' : '') +
-            '<div style="font-size:20px;letter-spacing:2px;color:#555;">איגוד בחורים · ליל שישי</div>' +
-            '<div style="font-size:40px;font-weight:800;">' + U.escapeHtml(tpl.name) + '</div>' +
-            '<div style="font-size:26px;color:#333;">' + U.escapeHtml(subLine.textContent) + '</div>' +
-            (dedicationLine.textContent ? '<div style="font-size:19px;color:#555;font-style:italic;border-top:1px dashed #bbb;padding-top:14px;">' + U.escapeHtml(dedicationLine.textContent) + '</div>' : '') +
+          '<div style="height:100vh;box-sizing:border-box;padding:22px;">' +
+            '<div style="height:100%;box-sizing:border-box;border:2.5px solid ' + accentHex + ';border-radius:6px;padding:10px;">' +
+              '<div style="height:100%;box-sizing:border-box;border:1px solid ' + accentHex + ';border-radius:3px;opacity:1;' +
+                'direction:rtl;font-family:Heebo,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:40px;">' +
+                '<img src="' + global.IGUD_LOGO_DATA_URL + '" style="max-width:260px;height:auto;">' +
+                (posterImageDataUrl ? '<img src="' + posterImageDataUrl + '" style="max-width:320px;max-height:320px;border-radius:14px;object-fit:cover;">' : '') +
+                '<div style="font-size:20px;letter-spacing:2px;color:#555;">א חסידישע ליל שישי</div>' +
+                '<div style="font-size:40px;font-weight:800;">' + U.escapeHtml(tpl.name) + '</div>' +
+                '<div style="font-size:26px;color:#333;">' + U.escapeHtml(subLine.textContent) + '</div>' +
+                (dedicationLine.textContent ? '<div style="font-size:19px;color:#555;font-style:italic;border-top:1px dashed #bbb;padding-top:14px;">' + U.escapeHtml(dedicationLine.textContent) + '</div>' : '') +
+              '</div>' +
+            '</div>' +
           '</div>';
         window.print();
       });

@@ -335,6 +335,8 @@ button, select, input, textarea { font-family: inherit; }
 .ready-print-title { font-size: 16px; font-weight: 800; color: var(--text-900); margin-bottom: 6px; }
 .ready-print-text { font-size: 13.8px; color: var(--text-600); margin-bottom: 14px; }
 .ready-print-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+.rp-email-row { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.rp-email-row input { flex: 1; min-width: 200px; }
 
 .timeline-box { margin-bottom: 20px; }
 .timeline-title { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; margin-bottom: 14px; }
@@ -550,10 +552,21 @@ button, select, input, textarea { font-family: inherit; }
   padding: 18px;
   margin-bottom: 14px;
   gap: 8px;
+  position: relative;
 }
-.poster-preview.accent-gold { background: linear-gradient(160deg, #fef3c7, var(--paper-bg)); border: 2px solid #f59e0b; }
-.poster-preview.accent-navy { background: linear-gradient(160deg, #dbeafe, var(--paper-bg)); border: 2px solid #1e3a8a; }
-.poster-preview.accent-purple { background: linear-gradient(160deg, #ede9fe, var(--paper-bg)); border: 2px solid #7c3aed; }
+.poster-preview::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  border: 1px solid currentColor;
+  border-radius: calc(var(--radius-md) - 4px);
+  opacity: .45;
+  pointer-events: none;
+}
+.poster-preview.accent-gold { background: linear-gradient(160deg, #fef3c7, var(--paper-bg)); border: 2px solid #f59e0b; color: #f59e0b; }
+.poster-preview.accent-navy { background: linear-gradient(160deg, #dbeafe, var(--paper-bg)); border: 2px solid #1e3a8a; color: #1e3a8a; }
+.poster-preview.accent-purple { background: linear-gradient(160deg, #ede9fe, var(--paper-bg)); border: 2px solid #7c3aed; color: #7c3aed; }
+.poster-logo { width: 72%; max-width: 190px; height: auto; margin-bottom: 4px; }
 .poster-preview-title { font-weight: 800; font-size: 13px; color: var(--paper-ink-900); letter-spacing: .03em; }
 .poster-preview-main { font-weight: 800; font-size: 19px; color: var(--paper-ink-900); }
 .poster-preview-sub { font-size: 13px; color: var(--paper-ink-600); }

@@ -21,7 +21,7 @@
       '<div style="direction:rtl;font-family:Heebo,Arial,sans-serif;padding:46px;max-width:760px;margin:0 auto;line-height:1.75;color:#16213a;">' +
 
         '<div style="text-align:center;margin-bottom:34px;">' +
-          '<div style="font-size:13px;letter-spacing:2px;color:#b3883a;font-weight:700;">איגוד בחורים</div>' +
+          '<img src="' + global.IGUD_LOGO_DATA_URL + '" style="max-width:200px;height:auto;margin-bottom:10px;">' +
           '<h1 style="font-size:30px;margin:6px 0 4px;">א חסידישע ליל שישי</h1>' +
           '<div style="font-size:15px;color:#52607a;">סילבוס ותוכנית לימוד שנתית — תשפ"ז</div>' +
         '</div>' +

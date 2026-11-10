@@ -165,7 +165,10 @@
             '<div class="ready-print-actions">' +
               '<button class="btn btn-outline btn-sm" id="rp-preview">👁️ תצוגה מקדימה ועדכון שאלות</button>' +
               '<button class="btn btn-primary btn-sm" id="rp-approve">✅ אשר והורד קובץ מאוחד לדפוס</button>' +
-              '<button class="btn btn-gold btn-sm" id="rp-email">✉️ שלח הזמנה לבית הדפוס</button>' +
+            '</div>' +
+            '<div class="rp-email-row">' +
+              '<input type="email" id="rp-email-to" class="form-control" placeholder="אימייל בית הדפוס" value="' + U.escapeHtml(state.printSpecs.printShopEmail || '') + '">' +
+              '<button class="btn btn-gold btn-sm" id="rp-email">✉️ שלח הזמנה</button>' +
             '</div>' +
             '<div id="rp-status" class="field-label" style="margin-top:10px;"></div>' +
           '</div>'
@@ -241,6 +244,11 @@
       });
       container.querySelector('#rp-email').addEventListener('click', function () {
         var specs = state.printSpecs;
+        var toEmail = container.querySelector('#rp-email-to').value.trim();
+        if (!toEmail) {
+          rpStatus.textContent = 'נא להזין כתובת אימייל לפני השליחה.';
+          return;
+        }
         var subject = 'הזמנת הדפסה — חוברת ' + readyToPrint.booklet.monthName + ' · א חסידישע ליל שישי';
         var driveNote = readyToPrint.booklet.driveFileId
           ? ('\nקובץ המאמר המקורי: ' + U.driveOpenUrl(readyToPrint.booklet.driveFileId) + '\n')
@@ -252,10 +260,8 @@
           'גודל נייר: ' + specs.paperSize + '\n' +
           'הנחיות: ' + specs.instructions + '\n\n' +
           'תודה רבה,\nאיגוד בחורים — א חסידישע ליל שישי';
-        var mailto = U.buildMailtoUrl(subject, body);
-        if (specs.printShopEmail) {
-          mailto = mailto.replace('mailto:?', 'mailto:' + encodeURIComponent(specs.printShopEmail) + '?');
-        }
+        var mailto = U.buildMailtoUrl(subject, body).replace('mailto:?', 'mailto:' + encodeURIComponent(toEmail) + '?');
+        rpStatus.textContent = 'נפתחת טיוטת מייל בתוכנת הדואר שלך אל ' + toEmail + ' — יש ללחוץ "שלח" שם כדי לסיים.';
         window.location.href = mailto;
       });
     }

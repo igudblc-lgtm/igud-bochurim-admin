@@ -7,7 +7,7 @@
   var A4_PT_W = 595.28;
   var A4_PT_H = 841.89;
 
-  function buildWrapperHtml(booklet, monthWeeks) {
+  function buildWrapperHtml(booklet, monthWeeks, scheduleInfo) {
     var rowsHtml = monthWeeks.map(function (w) {
       return '<tr>' +
         '<td style="padding:6px 10px;border-bottom:1px solid #ddd;font-weight:700;">פרשת ' + U.escapeHtml(w.parsha) + '</td>' +
@@ -20,10 +20,12 @@
       '<div dir="rtl" lang="he" style="width:' + A4_PX_W + 'px;height:' + A4_PX_H + 'px;box-sizing:border-box;' +
         'font-family:Heebo,Arial,sans-serif;padding:60px 56px;background:#ffffff;color:#16213a;">' +
         '<div style="text-align:center;border-bottom:3px solid #c9a44c;padding-bottom:18px;margin-bottom:26px;">' +
-          '<div style="font-size:13px;letter-spacing:2px;color:#b3883a;font-weight:700;">איגוד בחורים · א חסידישע ליל שישי</div>' +
+          '<img src="' + global.IGUD_LOGO_DATA_URL + '" style="max-width:220px;height:auto;margin-bottom:8px;">' +
+          '<div style="font-size:13px;letter-spacing:2px;color:#b3883a;font-weight:700;">א חסידישע ליל שישי</div>' +
           '<div style="font-size:30px;font-weight:800;margin-top:8px;">חוברת לימוד חודשית — ' + U.escapeHtml(booklet.monthName) + '</div>' +
           '<div style="font-size:14px;color:#52607a;margin-top:6px;">מהדורה מעודכנת לשנה זו · הופק אוטומטית</div>' +
         '</div>' +
+        (scheduleInfo ? '<div style="font-size:12.5px;color:#555;text-align:center;background:#f7f3ea;border-radius:8px;padding:10px 14px;margin-bottom:24px;">' + U.escapeHtml(scheduleInfo) + '</div>' : '') +
         '<div style="font-size:16px;font-weight:700;margin-bottom:10px;">מאמרים ומפגשי החודש</div>' +
         '<table style="width:100%;border-collapse:collapse;font-size:13.5px;margin-bottom:28px;">' +
           '<thead><tr>' +
@@ -35,6 +37,18 @@
         '</table>' +
         '<div style="font-size:16px;font-weight:700;margin-bottom:10px;">שאלות לעיון וחזרה</div>' +
         '<div style="font-size:14px;line-height:1.9;white-space:pre-line;">' + U.escapeHtml(booklet.reviewQuestions) + '</div>' +
+      '</div>'
+    );
+  }
+
+  function buildCreditPageHtml(publisherName) {
+    return (
+      '<div dir="rtl" lang="he" style="width:' + A4_PX_W + 'px;height:' + A4_PX_H + 'px;box-sizing:border-box;' +
+        'font-family:Heebo,Arial,sans-serif;padding:60px 56px;background:#ffffff;color:#16213a;' +
+        'display:flex;align-items:center;justify-content:center;text-align:center;">' +
+        '<div style="font-size:16px;line-height:1.9;color:#52607a;">חומרי הלימוד באדיבות המו"ל<br>' +
+          '<span style="font-size:20px;font-weight:700;color:#16213a;">' + U.escapeHtml(publisherName) + '</span>' +
+        '</div>' +
       '</div>'
     );
   }
@@ -89,13 +103,19 @@
     var state = global.IgudStore.getState();
     var booklet = state.booklets[monthIndex];
     var monthWeeks = state.weeks.filter(function (w) { return w.monthIndex === monthIndex; });
+    var specs = state.printSpecs || {};
 
-    var wrapperHtml = buildWrapperHtml(booklet, monthWeeks);
+    var wrapperHtml = buildWrapperHtml(booklet, monthWeeks, specs.scheduleInfo);
     var canvas = await renderHtmlToCanvas(wrapperHtml);
 
     var PDFDocument = global.PDFLib.PDFDocument;
     var outDoc = await PDFDocument.create();
     await addCanvasPage(outDoc, canvas);
+
+    if (specs.publisherName) {
+      var creditCanvas = await renderHtmlToCanvas(buildCreditPageHtml(specs.publisherName));
+      await addCanvasPage(outDoc, creditCanvas);
+    }
 
     var merged = false;
     if (booklet.driveFileId) {

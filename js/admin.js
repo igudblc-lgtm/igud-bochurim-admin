@@ -186,6 +186,18 @@
       return wrap;
     }
 
+    function textareaField(label, key) {
+      var wrap = U.el('div', { class: 'form-group' });
+      wrap.appendChild(U.el('label', { class: 'field-label' }, [label]));
+      var input = U.el('textarea', { class: 'form-control', rows: '2' }, [specs[key] || '']);
+      input.addEventListener('input', function () {
+        specs[key] = input.value;
+        global.IgudStore.persist();
+      });
+      wrap.appendChild(input);
+      return wrap;
+    }
+
     var row1 = U.el('div', { class: 'form-row' }, [
       field('אימייל בית הדפוס', 'printShopEmail', 'email'),
       field('כמות עותקים', 'quantity', 'number')
@@ -194,9 +206,13 @@
       field('גודל נייר', 'paperSize'),
       field('הנחיות הדפסה', 'instructions')
     ]);
+    var row3 = textareaField('היכן ומתי מתקיים הסדר (יופיע על גבי כל חוברת)', 'scheduleInfo');
+    var row4 = field('שם המו"ל (יופיע בעמוד השני של כל חוברת)', 'publisherName');
 
     box.appendChild(row1);
     box.appendChild(row2);
+    box.appendChild(row3);
+    box.appendChild(row4);
     container.appendChild(box);
   }
 

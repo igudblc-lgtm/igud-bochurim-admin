@@ -81,7 +81,7 @@
         annualTarget: 'סיום לימוד עיוני של 40 מאמרי חסידות נבחרים, עם דגש על יישום מעשי בעבודת השבוע.'
       },
       weeks: weeks,
-      booklets: D.buildBooklets(),
+      booklets: D.buildBooklets(weeks),
       students: buildStudents(weeks),
       eveningLogs: buildEveningLogs(weeks),
       taskStatus: {},
@@ -91,7 +91,9 @@
         printShopEmail: '',
         quantity: 30,
         paperSize: 'A4',
-        instructions: 'הדפסה דו-צדדית, כריכה בנייר רך'
+        instructions: 'הדפסה דו-צדדית, כריכה בנייר רך',
+        scheduleInfo: 'סדר ליל שישי מתקיים מידי שבוע בין השעות 10:00-12:00 בלילה. התוועדות חסידים מיד לאחר הסדר, בבית איגוד בחורים, רחוב בר אילן 25, ירושלים.',
+        publisherName: ''
       },
       currentWeekIndex: D.CURRENT_WEEK_INDEX
     };
@@ -102,8 +104,16 @@
     if (!parsed.security) parsed.security = { adminCode: '770' };
     if (!parsed.taskStatus) parsed.taskStatus = {};
     if (!parsed.printSpecs) {
-      parsed.printSpecs = { printShopEmail: '', quantity: 30, paperSize: 'A4', instructions: 'הדפסה דו-צדדית, כריכה בנייר רך' };
+      parsed.printSpecs = {
+        printShopEmail: '', quantity: 30, paperSize: 'A4', instructions: 'הדפסה דו-צדדית, כריכה בנייר רך',
+        scheduleInfo: 'סדר ליל שישי מתקיים מידי שבוע בין השעות 10:00-12:00 בלילה. התוועדות חסידים מיד לאחר הסדר, בבית איגוד בחורים, רחוב בר אילן 25, ירושלים.',
+        publisherName: ''
+      };
     }
+    if (parsed.printSpecs.scheduleInfo === undefined) {
+      parsed.printSpecs.scheduleInfo = 'סדר ליל שישי מתקיים מידי שבוע בין השעות 10:00-12:00 בלילה. התוועדות חסידים מיד לאחר הסדר, בבית איגוד בחורים, רחוב בר אילן 25, ירושלים.';
+    }
+    if (parsed.printSpecs.publisherName === undefined) parsed.printSpecs.publisherName = '';
     (parsed.booklets || []).forEach(function (b) {
       if (b.corePdfName === undefined) b.corePdfName = null;
       if (b.corePdfDataUrl === undefined) b.corePdfDataUrl = null;
