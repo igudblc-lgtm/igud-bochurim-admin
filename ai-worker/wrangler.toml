@@ -1,0 +1,11 @@
+name = "igud-bochurim-ai"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+# פריסה: wrangler deploy
+# מפתח ה-API של Anthropic נשמר כ"secret" ולא כאן בקובץ:
+#   wrangler secret put ANTHROPIC_API_KEY
+#
+# אחרי הפריסה, wrangler יציג כתובת כמו:
+#   https://igud-bochurim-ai.<your-subdomain>.workers.dev
+# את הכתובת הזו יש להכניס ל-js/ai-config.js באתר הראשי.

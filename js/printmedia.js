@@ -78,6 +78,13 @@
           '<select id="q-maamar" class="form-control">' + maamarOptions + '</select>' +
         '</div>' +
         '<div class="form-group">' +
+          '<label class="field-label">יצירת שאלות למאמר חדש עם AI (בסגנון השאלונים הקבועים שלכם)</label>' +
+          '<input id="q-ai-name" type="text" class="form-control" placeholder=\'שם המאמר, לדוגמה: "ד"ה באתי לגני"\' style="margin-bottom:6px;">' +
+          '<textarea id="q-ai-text" class="form-control" rows="3" placeholder="תוכן המאמר או תמצית ממנו (רשות — ככל שתכתבו יותר, השאלות יהיו מדויקות יותר)"></textarea>' +
+          '<button class="btn btn-outline btn-sm" id="q-ai-generate" style="margin-top:8px;" type="button">✨ חולל שאלות עם AI</button>' +
+          '<div id="q-ai-status" style="margin-top:6px;font-size:12.5px;color:var(--text-600);"></div>' +
+        '</div>' +
+        '<div class="form-group">' +
           '<label class="field-label">שאלות מיקוד וחזרה לחודש ' + U.escapeHtml(booklet.monthName) + '</label>' +
           '<textarea id="q-text" class="form-control" rows="7">' + U.escapeHtml(booklet.reviewQuestions) + '</textarea>' +
         '</div>' +
@@ -102,6 +109,35 @@
         textarea.value = textarea.value ? (textarea.value + '\n\n' + block) : block;
         e.target.value = '';
       });
+      var aiStatus = body.querySelector('#q-ai-status');
+      var aiBtn = body.querySelector('#q-ai-generate');
+      if (!global.IgudAI || !global.IgudAI.isConfigured()) {
+        aiStatus.textContent = 'תכונת ה-AI טרם הוגדרה באתר (ראו js/ai-config.js).';
+      }
+      aiBtn.addEventListener('click', function () {
+        var name = body.querySelector('#q-ai-name').value.trim();
+        var text = body.querySelector('#q-ai-text').value.trim();
+        if (!name) {
+          aiStatus.textContent = 'יש להזין קודם את שם המאמר.';
+          return;
+        }
+        if (!global.IgudAI || !global.IgudAI.isConfigured()) {
+          aiStatus.textContent = 'תכונת ה-AI טרם הוגדרה באתר (ראו js/ai-config.js).';
+          return;
+        }
+        aiBtn.disabled = true;
+        aiStatus.textContent = 'מחולל שאלות… (כמה שניות)';
+        global.IgudAI.generateQuestions(name, text).then(function (questions) {
+          var block = 'מאמר ד"ה ' + name + ':\n' + questions;
+          textarea.value = textarea.value ? (textarea.value + '\n\n' + block) : block;
+          aiStatus.textContent = 'נוספו שאלות בהצלחה.';
+        }).catch(function (e) {
+          aiStatus.textContent = 'שגיאה: ' + (e && e.message ? e.message : 'לא ניתן היה לחולל שאלות.');
+        }).finally(function () {
+          aiBtn.disabled = false;
+        });
+      });
+
       body.querySelector('#q-regenerate').addEventListener('click', function () {
         textarea.value = monthWeeks.map(function (w) {
           var qs = global.IgudData.MAAMAR_QUESTIONNAIRES[w.maamar] || '';
