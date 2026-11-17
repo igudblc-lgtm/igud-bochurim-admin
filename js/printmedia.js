@@ -245,14 +245,22 @@
       var card = U.el('div', { class: 'card poster-card' });
       var preview = U.el('div', { class: 'poster-preview accent-' + tpl.accent });
       var photoBox = U.el('div', { class: 'poster-preview-photo', style: 'display:none;' });
+      var logoBadge = U.el('div', { class: 'poster-badge' });
       var logoImg = U.el('img', { src: global.IGUD_LOGO_DATA_URL, alt: 'איגוד בחורים לומדי חסידות', class: 'poster-logo' });
+      logoBadge.appendChild(logoImg);
       var titleLine = U.el('div', { class: 'poster-preview-title' }, ['א חסידישע ליל שישי']);
+      var divider = U.el('div', { class: 'poster-divider' });
       var mainLine = U.el('div', { class: 'poster-preview-main' }, [tpl.name]);
       var subLine = U.el('div', { class: 'poster-preview-sub' }, ['']);
       var dedicationLine = U.el('div', { class: 'poster-preview-dedication' }, ['']);
+      preview.appendChild(U.el('div', { class: 'poster-corner tl' }));
+      preview.appendChild(U.el('div', { class: 'poster-corner tr' }));
+      preview.appendChild(U.el('div', { class: 'poster-corner bl' }));
+      preview.appendChild(U.el('div', { class: 'poster-corner br' }));
       preview.appendChild(photoBox);
-      preview.appendChild(logoImg);
+      preview.appendChild(logoBadge);
       preview.appendChild(titleLine);
+      preview.appendChild(divider);
       preview.appendChild(mainLine);
       preview.appendChild(subLine);
       preview.appendChild(dedicationLine);
@@ -349,19 +357,36 @@
 
       var printPosterBtn = U.el('button', { class: 'btn btn-gold', style: 'width:100%;justify-content:center;' }, ['הדפסת מודעה']);
       printPosterBtn.addEventListener('click', function () {
-        var accentHex = { gold: '#c9a44c', navy: '#1e3a8a', purple: '#7c3aed' }[tpl.accent] || '#c9a44c';
+        var ACCENTS = {
+          gold: { line: '#e3b753', text: '#a8731a', bg: 'radial-gradient(130% 90% at 50% 0%, #fffaeb 0%, #fdf0cf 55%, #f9e3a8 100%)' },
+          navy: { line: '#3550a8', text: '#1e3a8a', bg: 'radial-gradient(130% 90% at 50% 0%, #f3f6ff 0%, #e2e9fc 55%, #c7d4f6 100%)' },
+          purple: { line: '#8a5de0', text: '#6228c4', bg: 'radial-gradient(130% 90% at 50% 0%, #f8f5ff 0%, #ebe3fb 55%, #d8c7f6 100%)' }
+        };
+        var ac = ACCENTS[tpl.accent] || ACCENTS.gold;
+        var corner = function (pos, sides) {
+          return '<div style="position:absolute;' + pos + ';width:34px;height:34px;' + sides + ';opacity:.85;"></div>';
+        };
         var printRoot = document.getElementById('print-root');
         printRoot.innerHTML =
-          '<div style="height:100vh;box-sizing:border-box;padding:22px;">' +
-            '<div style="height:100%;box-sizing:border-box;border:2.5px solid ' + accentHex + ';border-radius:6px;padding:10px;">' +
-              '<div style="height:100%;box-sizing:border-box;border:1px solid ' + accentHex + ';border-radius:3px;opacity:1;' +
-                'direction:rtl;font-family:Heebo,Arial,sans-serif;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;padding:40px;">' +
-                '<img src="' + global.IGUD_LOGO_DATA_URL + '" style="max-width:260px;height:auto;">' +
-                (posterImageDataUrl ? '<img src="' + posterImageDataUrl + '" style="max-width:320px;max-height:320px;border-radius:14px;object-fit:cover;">' : '') +
-                '<div style="font-size:20px;letter-spacing:2px;color:#555;">א חסידישע ליל שישי</div>' +
-                '<div style="font-size:40px;font-weight:800;">' + U.escapeHtml(tpl.name) + '</div>' +
-                '<div style="font-size:26px;color:#333;">' + U.escapeHtml(subLine.textContent) + '</div>' +
-                (dedicationLine.textContent ? '<div style="font-size:19px;color:#555;font-style:italic;border-top:1px dashed #bbb;padding-top:14px;">' + U.escapeHtml(dedicationLine.textContent) + '</div>' : '') +
+          '<div style="height:100vh;box-sizing:border-box;padding:26px;direction:rtl;font-family:Heebo,Arial,sans-serif;">' +
+            '<div style="position:relative;height:100%;box-sizing:border-box;border:1px solid ' + ac.line + ';border-radius:10px;overflow:hidden;background:' + ac.bg + ';">' +
+              '<div style="position:absolute;inset:14px;border:1px solid ' + ac.line + ';border-radius:6px;opacity:.5;"></div>' +
+              corner('top:22px;left:22px', 'border-top:2.5px solid ' + ac.line + ';border-right:2.5px solid ' + ac.line) +
+              corner('top:22px;right:22px', 'border-top:2.5px solid ' + ac.line + ';border-left:2.5px solid ' + ac.line) +
+              corner('bottom:22px;left:22px', 'border-bottom:2.5px solid ' + ac.line + ';border-right:2.5px solid ' + ac.line) +
+              corner('bottom:22px;right:22px', 'border-bottom:2.5px solid ' + ac.line + ';border-left:2.5px solid ' + ac.line) +
+              '<div style="position:relative;height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:20px;padding:60px;">' +
+                '<div style="width:112px;height:112px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1.5px ' + ac.line + ',0 10px 24px -10px rgba(0,0,0,.35);">' +
+                  '<img src="' + global.IGUD_LOGO_DATA_URL + '" style="width:78%;height:auto;">' +
+                '</div>' +
+                (posterImageDataUrl ? '<img src="' + posterImageDataUrl + '" style="max-width:320px;max-height:320px;border-radius:14px;object-fit:cover;box-shadow:0 0 0 1.5px ' + ac.line + ';">' : '') +
+                '<div style="font-size:16px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:' + ac.text + ';opacity:.85;">א חסידישע ליל שישי</div>' +
+                '<div style="width:70px;height:1px;background:' + ac.line + ';position:relative;">' +
+                  '<span style="position:absolute;top:50%;left:50%;width:9px;height:9px;background:' + ac.line + ';transform:translate(-50%,-50%) rotate(45deg);"></span>' +
+                '</div>' +
+                '<div style="font-family:\'Frank Ruhl Libre\',Heebo,serif;font-size:46px;font-weight:800;line-height:1.25;color:#1f1b14;">' + U.escapeHtml(tpl.name) + '</div>' +
+                '<div style="font-size:24px;font-weight:500;color:#44403c;">' + U.escapeHtml(subLine.textContent) + '</div>' +
+                (dedicationLine.textContent ? '<div style="font-size:18px;color:#57534e;font-style:italic;border-top:1px dashed ' + ac.line + ';padding-top:16px;opacity:.9;">' + U.escapeHtml(dedicationLine.textContent) + '</div>' : '') +
               '</div>' +
             '</div>' +
           '</div>';
