@@ -229,8 +229,14 @@
     });
 
     var storageNote = U.el('div', { class: 'storage-note' }, [
-      'קבצי החוברות המקוריים (PDF גדולים) מקושרים ישירות מ-Google Drive שלכם — ללא העלאה או אחסון כפול. רק נתוני המערכת (לוח שנה, נוכחות, שאלות) נשמרים/מסונכרנים בענן.'
+      'קבצי החוברות המקוריים (PDF גדולים) מקושרים ישירות מ-Google Drive שלכם — ללא העלאה או אחסון כפול. רק נתוני המערכת (לוח שנה, נוכחות, שאלות) נשמרים/מסונכרנים בענן. ',
+      'כל חוברת חדשה יש להעלות לתיקייה הקבועה: '
     ]);
+    storageNote.appendChild(U.el('a', {
+      href: 'https://drive.google.com/drive/folders/1kGvUkjrjPJg7uqJJNpCOQPD3hsb8M79F',
+      target: '_blank', rel: 'noopener'
+    }, ['חומרי לימוד › א חסידישע ליל שישי']));
+    storageNote.appendChild(document.createTextNode(' — ולשמור שם קובץ אחיד, לדוגמה: "קובץ לימוד א חסידישע ליל שישי – חודש כסלו ה׳תשפ״ז.pdf".'));
     box.appendChild(storageNote);
 
     container.appendChild(box);
