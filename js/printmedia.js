@@ -381,18 +381,21 @@
               corner('top:22px;right:22px', 'border-top:2.5px solid ' + ac.line + ';border-left:2.5px solid ' + ac.line) +
               corner('bottom:22px;left:22px', 'border-bottom:2.5px solid ' + ac.line + ';border-right:2.5px solid ' + ac.line) +
               corner('bottom:22px;right:22px', 'border-bottom:2.5px solid ' + ac.line + ';border-left:2.5px solid ' + ac.line) +
-              '<div style="position:relative;height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:20px;padding:60px;">' +
-                '<div style="width:112px;height:112px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1.5px ' + ac.line + ',0 10px 24px -10px rgba(0,0,0,.35);">' +
+              '<div style="position:relative;height:100%;box-sizing:border-box;display:flex;flex-direction:column;align-items:center;text-align:center;padding:70px 60px 56px;">' +
+                '<div style="flex:0 0 auto;width:112px;height:112px;border-radius:50%;background:#fff;display:flex;align-items:center;justify-content:center;box-shadow:0 0 0 1.5px ' + ac.line + ',0 10px 24px -10px rgba(0,0,0,.35);">' +
                   '<img src="' + global.IGUD_LOGO_DATA_URL + '" style="width:78%;height:auto;">' +
                 '</div>' +
-                (posterImageDataUrl ? '<img src="' + posterImageDataUrl + '" style="max-width:320px;max-height:320px;border-radius:14px;object-fit:cover;box-shadow:0 0 0 1.5px ' + ac.line + ';">' : '') +
-                '<div style="font-size:16px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:' + ac.text + ';opacity:.85;">א חסידישע ליל שישי</div>' +
-                '<div style="width:70px;height:1px;background:' + ac.line + ';position:relative;">' +
-                  '<span style="position:absolute;top:50%;left:50%;width:9px;height:9px;background:' + ac.line + ';transform:translate(-50%,-50%) rotate(45deg);"></span>' +
+                '<div style="flex:1 1 auto;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;width:100%;">' +
+                  (posterImageDataUrl ? '<img src="' + posterImageDataUrl + '" style="max-width:340px;max-height:340px;border-radius:14px;object-fit:cover;box-shadow:0 0 0 1.5px ' + ac.line + ';">' : '') +
+                  '<div style="font-size:16px;font-weight:700;letter-spacing:.28em;text-transform:uppercase;color:' + ac.text + ';opacity:.85;">א חסידישע ליל שישי</div>' +
+                  '<div style="width:70px;height:1px;background:' + ac.line + ';position:relative;">' +
+                    '<span style="position:absolute;top:50%;left:50%;width:9px;height:9px;background:' + ac.line + ';transform:translate(-50%,-50%) rotate(45deg);"></span>' +
+                  '</div>' +
+                  '<div style="font-family:var(--font-display);font-size:56px;font-weight:400;line-height:1.3;color:#3a2e1f;">' + U.escapeHtml(tpl.name) + '</div>' +
+                  '<div style="font-size:26px;font-weight:500;color:#44403c;">' + U.escapeHtml(subLine.textContent) + '</div>' +
+                  (dedicationLine.textContent ? '<div style="font-size:19px;color:#57534e;font-style:italic;border-top:1px dashed ' + ac.line + ';padding-top:18px;opacity:.9;">' + U.escapeHtml(dedicationLine.textContent) + '</div>' : '') +
                 '</div>' +
-                '<div style="font-family:var(--font-display);font-size:48px;font-weight:400;line-height:1.3;color:#3a2e1f;">' + U.escapeHtml(tpl.name) + '</div>' +
-                '<div style="font-size:24px;font-weight:500;color:#44403c;">' + U.escapeHtml(subLine.textContent) + '</div>' +
-                (dedicationLine.textContent ? '<div style="font-size:18px;color:#57534e;font-style:italic;border-top:1px dashed ' + ac.line + ';padding-top:16px;opacity:.9;">' + U.escapeHtml(dedicationLine.textContent) + '</div>' : '') +
+                '<div style="flex:0 0 auto;font-size:13px;letter-spacing:.1em;color:' + ac.text + ';opacity:.6;">איגוד בחורים לומדי חסידות</div>' +
               '</div>' +
             '</div>' +
           '</div>';
@@ -417,7 +420,7 @@
 
     function renderSichosMatches(q) {
       var sichosMatches = (global.IgudData.LIKUTEI_SICHOS || []).filter(function (s) {
-        return s.title.indexOf(q) > -1 || s.book.indexOf(q) > -1;
+        return s.title.indexOf(q) > -1;
       });
       if (!sichosMatches.length) return;
 
