@@ -409,11 +409,31 @@
   function renderSearch(container, state) {
     var box = U.el('div', { class: 'card card-pad search-card' });
     box.appendChild(U.el('div', { class: 'section-title' }, ['חיפוש חומר לימוד']));
-    box.appendChild(U.el('div', { class: 'field-label' }, ['חיפוש לפי חודש, מאמר, פרשה או משפיע — לדוגמה "אייר" או "פדה בשלום"']));
+    box.appendChild(U.el('div', { class: 'field-label' }, ['חיפוש לפי חודש, מאמר, פרשה או משפיע, או חיפוש בספריית ליקוטי שיחות — לדוגמה "אייר", "פדה בשלום" או "תולדות"']));
     var input = U.el('input', { type: 'text', class: 'form-control', placeholder: 'מה לומדים בחודש אייר?' });
     var resultsBox = U.el('div', { class: 'search-results' });
     box.appendChild(input);
     box.appendChild(resultsBox);
+
+    function renderSichosMatches(q) {
+      var sichosMatches = (global.IgudData.LIKUTEI_SICHOS || []).filter(function (s) {
+        return s.title.indexOf(q) > -1 || s.book.indexOf(q) > -1;
+      });
+      if (!sichosMatches.length) return;
+
+      var sichosBox = U.el('div', { class: 'search-result-row' });
+      sichosBox.appendChild(U.el('div', { class: 'search-result-month' }, ['ליקוטי שיחות']));
+      var list = U.el('div', { class: 'search-result-weeks' });
+      sichosMatches.forEach(function (s) {
+        var line = U.el('div', { class: 'search-result-week' });
+        line.appendChild(document.createTextNode('חלק ' + s.chelek + ' · ' + s.book + ' · ' + s.title + ' — '));
+        var link = U.el('a', { href: U.driveOpenUrl(s.driveFileId), target: '_blank', rel: 'noopener' }, ['פתיחה ב-Drive']);
+        line.appendChild(link);
+        list.appendChild(line);
+      });
+      sichosBox.appendChild(list);
+      resultsBox.appendChild(sichosBox);
+    }
 
     function render_results(query) {
       resultsBox.innerHTML = '';
@@ -427,8 +447,12 @@
           (w.mashpia && w.mashpia.indexOf(q) > -1);
       });
 
+      renderSichosMatches(q);
+
       if (!matches.length) {
-        resultsBox.appendChild(U.el('div', { class: 'search-empty' }, ['לא נמצאו תוצאות עבור "' + q + '"']));
+        if (!resultsBox.children.length) {
+          resultsBox.appendChild(U.el('div', { class: 'search-empty' }, ['לא נמצאו תוצאות עבור "' + q + '"']));
+        }
         return;
       }
 
