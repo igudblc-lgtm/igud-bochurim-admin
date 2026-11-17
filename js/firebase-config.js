@@ -1,16 +1,10 @@
-// הדביקו כאן את ה-firebaseConfig שתקבלו מ-Firebase Console (הגדרות הפרויקט -> אפליקציית Web).
-// כל עוד המשתנה למטה הוא null, האפליקציה ממשיכה לעבוד כרגיל מקומית (localStorage) בלי שום שגיאה.
-window.IGUD_FIREBASE_CONFIG = null;
-
-/* לדוגמה, אחרי שתקבלו את הפרטים מ-Firebase, יראה כך (עם הערכים האמיתיים שלכם):
-
+// פרטי החיבור ל-Firebase של הפרויקט "igud-bacurim-lemida".
+// כל עוד המשתנה הזה הוא אובייקט אמיתי (לא null), האפליקציה מסנכרנת נתונים ל-Firestore בזמן אמת.
 window.IGUD_FIREBASE_CONFIG = {
-  apiKey: "AIzaSyXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX",
-  authDomain: "igud-bochurim-xxxxx.firebaseapp.com",
-  projectId: "igud-bochurim-xxxxx",
-  storageBucket: "igud-bochurim-xxxxx.appspot.com",
-  messagingSenderId: "123456789012",
-  appId: "1:123456789012:web:abcdef1234567890"
+  apiKey: "AIzaSyAcuuaFzsih5aEJaMs1zO75jWabZML6l0E",
+  authDomain: "igud-bacurim-lemida.firebaseapp.com",
+  projectId: "igud-bacurim-lemida",
+  storageBucket: "igud-bacurim-lemida.firebasestorage.app",
+  messagingSenderId: "724283458324",
+  appId: "1:724283458324:web:8b402a441cf018d79b3801"
 };
-
-*/
