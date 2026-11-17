@@ -1,10 +1,27 @@
+@font-face { font-family: 'EFT Pnina'; src: url('../assets/fonts/EFT-Pnina-Light.ttf') format('truetype'); font-weight: 300; font-style: normal; }
+@font-face { font-family: 'EFT Pnina'; src: url('../assets/fonts/EFT-Pnina-Regular.ttf') format('truetype'); font-weight: 400; font-style: normal; }
+@font-face { font-family: 'EFT Pnina'; src: url('../assets/fonts/EFT-Pnina-Medium.ttf') format('truetype'); font-weight: 500; font-style: normal; }
+@font-face { font-family: 'EFT Pnina'; src: url('../assets/fonts/EFT-Pnina-Bold.ttf') format('truetype'); font-weight: 700; font-style: normal; }
+@font-face { font-family: 'EFT Pnina'; src: url('../assets/fonts/EFT-Pnina-Heavy.ttf') format('truetype'); font-weight: 800; font-style: normal; }
+@font-face { font-family: 'EFT Pnina'; src: url('../assets/fonts/EFT-Pnina-Black.ttf') format('truetype'); font-weight: 900; font-style: normal; }
+@font-face { font-family: 'HaYetzira Choppy'; src: url('../assets/fonts/HaYetzira-Choppy.otf') format('opentype'); font-weight: 400; font-style: normal; }
+
 :root {
   --navy-900: #0b2340;
   --navy-800: #112f52;
   --navy-700: #1e3a8a;
-  --gold-500: #f59e0b;
-  --gold-600: #d97706;
-  --gold-100: #fef3c7;
+  --gold-500: #d4a94a;
+  --gold-600: #a97c2c;
+  --gold-100: #f3dda0;
+  --brand-sienna: #8a3e1c;
+  --brand-sienna-deep: #5a2611;
+  --brand-cream: #fdf8ee;
+  --brand-sky: #6fb6d6;
+  --brand-sky-soft: #e4f1f8;
+  --brand-sunrise: #f79b5e;
+  --brand-sunrise-soft: #ffe0c2;
+  --font-body: 'EFT Pnina', 'Heebo', 'Segoe UI', sans-serif;
+  --font-display: 'HaYetzira Choppy', 'EFT Pnina', 'Rubik', sans-serif;
   --bg: #f8fafc;
   --card: #ffffff;
   --border: #e2e8f0;
@@ -68,7 +85,7 @@ html, body {
   margin: 0;
   background: var(--bg);
   color: var(--text-900);
-  font-family: 'Heebo', 'Rubik', 'Segoe UI', sans-serif;
+  font-family: var(--font-body);
   direction: rtl;
   transition: background .2s ease, color .2s ease;
 }
@@ -77,7 +94,7 @@ button, select, input, textarea { font-family: inherit; }
 
 .page-title, .section-title, .hero-parsha, .kpi-value, .brand-name,
 .modal-title, .month-heading, h1, h2 {
-  font-family: 'Rubik', 'Heebo', sans-serif;
+  font-family: var(--font-display);
   letter-spacing: -0.01em;
 }
 
@@ -571,16 +588,16 @@ button, select, input, textarea { font-family: inherit; }
 .poster-corner.bl { bottom: 15px; left: 15px; border-bottom: 2px solid currentColor; border-right: 2px solid currentColor; }
 .poster-corner.br { bottom: 15px; right: 15px; border-bottom: 2px solid currentColor; border-left: 2px solid currentColor; }
 .poster-preview.accent-gold {
-  background: radial-gradient(130% 90% at 50% 0%, #fffaeb 0%, #fdf0cf 55%, #f9e3a8 100%);
-  border: 1px solid #e3b753; color: #a8731a;
+  background: radial-gradient(130% 90% at 50% 0%, #fffdf8 0%, #faf0dc 55%, #f3dda0 100%);
+  border: 1px solid #c2953a; color: #5a2611;
 }
 .poster-preview.accent-navy {
-  background: radial-gradient(130% 90% at 50% 0%, #f3f6ff 0%, #e2e9fc 55%, #c7d4f6 100%);
-  border: 1px solid #3550a8; color: #1e3a8a;
+  background: radial-gradient(130% 90% at 50% 0%, #fdf8ee 0%, #e4f1f8 55%, #c7e4f0 100%);
+  border: 1px solid #6fb6d6; color: #2b5a72;
 }
 .poster-preview.accent-purple {
-  background: radial-gradient(130% 90% at 50% 0%, #f8f5ff 0%, #ebe3fb 55%, #d8c7f6 100%);
-  border: 1px solid #8a5de0; color: #6228c4;
+  background: radial-gradient(130% 90% at 50% 0%, #fdf8ee 0%, #ffe0c2 55%, #ffbf8a 100%);
+  border: 1px solid #f79b5e; color: #9a4a1f;
 }
 .poster-badge {
   width: 46px; height: 46px; border-radius: 50%; background: var(--paper-bg);
@@ -597,7 +614,7 @@ button, select, input, textarea { font-family: inherit; }
   content: ''; position: absolute; top: 50%; left: 50%; width: 6px; height: 6px;
   background: currentColor; transform: translate(-50%, -50%) rotate(45deg);
 }
-.poster-preview-main { font-family: 'Frank Ruhl Libre', 'Heebo', serif; font-weight: 800; font-size: 21px; line-height: 1.25; color: var(--paper-ink-900); }
+.poster-preview-main { font-family: var(--font-display); font-weight: 400; font-size: 23px; line-height: 1.25; color: var(--paper-ink-900); }
 .poster-preview-sub { font-size: 13px; font-weight: 500; color: var(--paper-ink-600); }
 .poster-preview-dedication {
   font-size: 12px;

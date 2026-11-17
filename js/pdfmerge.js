@@ -18,7 +18,7 @@
 
     return (
       '<div dir="rtl" lang="he" style="width:' + A4_PX_W + 'px;height:' + A4_PX_H + 'px;box-sizing:border-box;' +
-        'font-family:Heebo,Arial,sans-serif;padding:60px 56px;background:#ffffff;color:#16213a;">' +
+        'font-family:var(--font-body);padding:60px 56px;background:#ffffff;color:#16213a;">' +
         '<div style="text-align:center;border-bottom:3px solid #c9a44c;padding-bottom:18px;margin-bottom:26px;">' +
           '<img src="' + global.IGUD_LOGO_DATA_URL + '" style="max-width:220px;height:auto;margin-bottom:8px;">' +
           '<div style="font-size:13px;letter-spacing:2px;color:#b3883a;font-weight:700;">א חסידישע ליל שישי</div>' +
@@ -44,7 +44,7 @@
   function buildCreditPageHtml(publisherName) {
     return (
       '<div dir="rtl" lang="he" style="width:' + A4_PX_W + 'px;height:' + A4_PX_H + 'px;box-sizing:border-box;' +
-        'font-family:Heebo,Arial,sans-serif;padding:60px 56px;background:#ffffff;color:#16213a;' +
+        'font-family:var(--font-body);padding:60px 56px;background:#ffffff;color:#16213a;' +
         'display:flex;align-items:center;justify-content:center;text-align:center;">' +
         '<div style="font-size:16px;line-height:1.9;color:#52607a;">חומרי הלימוד באדיבות המו"ל<br>' +
           '<span style="font-size:20px;font-weight:700;color:#16213a;">' + U.escapeHtml(publisherName) + '</span>' +

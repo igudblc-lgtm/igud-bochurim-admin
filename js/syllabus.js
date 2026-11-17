@@ -18,7 +18,7 @@
 
     var printRoot = document.getElementById('print-root');
     printRoot.innerHTML =
-      '<div style="direction:rtl;font-family:Heebo,Arial,sans-serif;padding:46px;max-width:760px;margin:0 auto;line-height:1.75;color:#16213a;">' +
+      '<div style="direction:rtl;font-family:var(--font-body);padding:46px;max-width:760px;margin:0 auto;line-height:1.75;color:#16213a;">' +
 
         '<div style="text-align:center;margin-bottom:34px;">' +
           '<img src="' + global.IGUD_LOGO_DATA_URL + '" style="max-width:200px;height:auto;margin-bottom:10px;">' +

@@ -19,7 +19,7 @@
     }).join('');
 
     var creditPageHtml = specs.publisherName
-      ? '<div style="page-break-before:always;height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;direction:rtl;font-family:Heebo,Arial,sans-serif;">' +
+      ? '<div style="page-break-before:always;height:100vh;display:flex;align-items:center;justify-content:center;text-align:center;direction:rtl;font-family:var(--font-body);">' +
           '<div style="font-size:16px;line-height:1.9;color:#555;">חומרי הלימוד באדיבות המו"ל<br>' +
             '<span style="font-size:20px;font-weight:700;color:#16213a;">' + U.escapeHtml(specs.publisherName) + '</span>' +
           '</div>' +
@@ -27,7 +27,7 @@
       : '';
 
     printRoot.innerHTML =
-      '<div style="direction:rtl;font-family:Heebo,Arial,sans-serif;padding:30px;">' +
+      '<div style="direction:rtl;font-family:var(--font-body);padding:30px;">' +
         '<div style="text-align:center;"><img src="' + global.IGUD_LOGO_DATA_URL + '" style="max-width:200px;height:auto;margin-bottom:10px;"></div>' +
         '<h1 style="text-align:center;">חוברת לימוד חודשית — ' + U.escapeHtml(booklet.monthName) + '</h1>' +
         '<h3 style="text-align:center;color:#555;">א חסידישע ליל שישי</h3>' +
@@ -364,9 +364,9 @@
       var printPosterBtn = U.el('button', { class: 'btn btn-gold', style: 'width:100%;justify-content:center;' }, ['הדפסת מודעה']);
       printPosterBtn.addEventListener('click', function () {
         var ACCENTS = {
-          gold: { line: '#e3b753', text: '#a8731a', bg: 'radial-gradient(130% 90% at 50% 0%, #fffaeb 0%, #fdf0cf 55%, #f9e3a8 100%)' },
-          navy: { line: '#3550a8', text: '#1e3a8a', bg: 'radial-gradient(130% 90% at 50% 0%, #f3f6ff 0%, #e2e9fc 55%, #c7d4f6 100%)' },
-          purple: { line: '#8a5de0', text: '#6228c4', bg: 'radial-gradient(130% 90% at 50% 0%, #f8f5ff 0%, #ebe3fb 55%, #d8c7f6 100%)' }
+          gold: { line: '#c2953a', text: '#5a2611', bg: 'radial-gradient(130% 90% at 50% 0%, #fffdf8 0%, #faf0dc 55%, #f3dda0 100%)' },
+          navy: { line: '#6fb6d6', text: '#2b5a72', bg: 'radial-gradient(130% 90% at 50% 0%, #fdf8ee 0%, #e4f1f8 55%, #c7e4f0 100%)' },
+          purple: { line: '#f79b5e', text: '#9a4a1f', bg: 'radial-gradient(130% 90% at 50% 0%, #fdf8ee 0%, #ffe0c2 55%, #ffbf8a 100%)' }
         };
         var ac = ACCENTS[tpl.accent] || ACCENTS.gold;
         var corner = function (pos, sides) {
@@ -374,7 +374,7 @@
         };
         var printRoot = document.getElementById('print-root');
         printRoot.innerHTML =
-          '<div style="height:100vh;box-sizing:border-box;padding:26px;direction:rtl;font-family:Heebo,Arial,sans-serif;">' +
+          '<div style="height:100vh;box-sizing:border-box;padding:26px;direction:rtl;font-family:var(--font-body);">' +
             '<div style="position:relative;height:100%;box-sizing:border-box;border:1px solid ' + ac.line + ';border-radius:10px;overflow:hidden;background:' + ac.bg + ';">' +
               '<div style="position:absolute;inset:14px;border:1px solid ' + ac.line + ';border-radius:6px;opacity:.5;"></div>' +
               corner('top:22px;left:22px', 'border-top:2.5px solid ' + ac.line + ';border-right:2.5px solid ' + ac.line) +
@@ -390,7 +390,7 @@
                 '<div style="width:70px;height:1px;background:' + ac.line + ';position:relative;">' +
                   '<span style="position:absolute;top:50%;left:50%;width:9px;height:9px;background:' + ac.line + ';transform:translate(-50%,-50%) rotate(45deg);"></span>' +
                 '</div>' +
-                '<div style="font-family:\'Frank Ruhl Libre\',Heebo,serif;font-size:46px;font-weight:800;line-height:1.25;color:#1f1b14;">' + U.escapeHtml(tpl.name) + '</div>' +
+                '<div style="font-family:var(--font-display);font-size:48px;font-weight:400;line-height:1.3;color:#3a2e1f;">' + U.escapeHtml(tpl.name) + '</div>' +
                 '<div style="font-size:24px;font-weight:500;color:#44403c;">' + U.escapeHtml(subLine.textContent) + '</div>' +
                 (dedicationLine.textContent ? '<div style="font-size:18px;color:#57534e;font-style:italic;border-top:1px dashed ' + ac.line + ';padding-top:16px;opacity:.9;">' + U.escapeHtml(dedicationLine.textContent) + '</div>' : '') +
               '</div>' +
